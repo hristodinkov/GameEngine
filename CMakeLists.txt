@@ -28,6 +28,9 @@ set(IMGUI_SOURCES
         MyClasses/Scene.h
         MyClasses/Rotate.cpp
         MyClasses/Rotate.h
+        MyClasses/SceneManager.cpp
+        MyClasses/SceneManager.h
+        MyClasses/Style.h
 )
 
 add_executable(RawEngine main.cpp

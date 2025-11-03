@@ -14,6 +14,8 @@
 
 #include "MyClasses/Rotate.h"
 #include "MyClasses/Scene.h"
+#include "MyClasses/SceneManager.h"
+#include "MyClasses/Style.h"
 
 //#define MAC_CLION
 #define VSTUDIO
@@ -32,13 +34,25 @@
 #include <imgui_impl_opengl3.h>
 #endif
 
+Style style;
 int g_width = 800;
 int g_height = 600;
 Camera camera;
+bool IMGuiOpened = true;
+bool checkboxTest = false;
+float value1 = 0.1f;
+int value2 =1;
+const char* items[] = {"item1", "item2", "item3"};
+int current = 0;
+void myStyle() {
+    style.SetupImGuiStyle();
+}
 
 void processInput(GLFWwindow *window) {
     if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
         glfwSetWindowShouldClose(window, true);
+    //if (glfwGetKey(window, GLFW_KEY_C) == GLFW_PRESS)
+
     camera.Move(window);
     camera.Rotate(window);
 
@@ -168,34 +182,54 @@ int main() {
     quadModel.translate(glm::vec3(0,0,-2.5));
     quadModel.scale(glm::vec3(5, 5, 1));
 
-    Scene scene;
-    //core::Model suzanne = core::AssimpLoader::loadModel("models/nonormalmonkey.obj");
-    auto suzanne = std::make_shared<GameObject>("Suzanne");
+    // Scene scene;
+    // //core::Model suzanne = core::AssimpLoader::loadModel("models/nonormalmonkey.obj");
+    // auto suzanne = std::make_shared<GameObject>("Suzanne");
+    // suzanne->model = core::AssimpLoader::loadModel("models/nonormalmonkey.obj");
+    // suzanne->translate(glm::vec3(-2.0f, 0.0f, 0.0f));
+    // scene.addObject(suzanne);
+    //
+    // suzanne->addBehavior(std::make_shared<Rotate>(glm::vec3(1, 0, 0), glm::radians(60.0f)));
+    //
+    // auto car = scene.addObject(GameObject("car"));
+    // car->model = core::AssimpLoader::loadModel("models/car.fbx");
+    // car->translate(glm::vec3(2.0f, 0.0f, 0.0f));
+    // car->scale(glm::vec3(0.01f, 0.01f, 0.01f));
+    // // auto mirror = scene.addObject(GameObject("mirror"));
+    // // mirror->model = core::AssimpLoader::loadModel("models/mirror.fbx");
+    //
+    //
+    // //suzanne->addChild(mirror);
+    //
+    // // mirror->translate(glm::vec3(2.0f, 0.0f, 0.0f));
+    // // mirror->scale(glm::vec3(0.01f, 0.01f, 0.01f));
+    //
+    // auto ford = scene.addObject(GameObject("ford"));
+    // ford->model = core::AssimpLoader::loadModel("models/ford.obj");
+    // ford->translate(glm::vec3(30.0f, 0.0f, 0.0f));
+    // ford->rotate(glm::vec3(1,1,0), glm::radians(60.0f));
+    // ford->scale(glm::vec3(1.0f, 1.0f,  1.0f));
+    //mirror->addChild(ford);
+
+    SceneManager sceneManager;
+
+    auto scene1 = sceneManager.createScene("Monkey");
+    auto suzanne = scene1->addObject(GameObject("Suzanne"));
     suzanne->model = core::AssimpLoader::loadModel("models/nonormalmonkey.obj");
     suzanne->translate(glm::vec3(-2.0f, 0.0f, 0.0f));
-    scene.addObject(suzanne);
+    suzanne->addBehavior(std::make_shared<Rotate>(
+        glm::vec3(0, 1, 0), glm::radians(30.0f)
+    ));
 
-    suzanne->addBehavior(std::make_shared<Rotate>(glm::vec3(1, 0, 0), glm::radians(60.0f)));
+    auto scene2 = sceneManager.createScene("Car");
+    auto car = scene2->addObject(GameObject("Car"));
+    car->model = core::AssimpLoader::loadModel("models/car.fbx");
+    car->translate(glm::vec3(2.0f, 0.0f, 0.0f));
+    car->scale(glm::vec3(0.01f, 0.01f, 0.01f));
+    car->addBehavior(std::make_shared<Rotate>(
+        glm::vec3(1, 0, 0), glm::radians(60.0f)
+    ));
 
-    auto ak47 = scene.addObject(GameObject("ak47"));
-    ak47->model = core::AssimpLoader::loadModel("models/ak47.obj");
-    ak47->translate(glm::vec3(2.0f, 0.0f, 0.0f));
-
-    auto cat = scene.addObject(GameObject("cat"));
-    cat->model = core::AssimpLoader::loadModel("models/cat.fbx");
-
-
-    suzanne->addChild(cat);
-
-    cat->translate(glm::vec3(2.0f, 0.0f, 0.0f));
-    cat->scale(glm::vec3(0.1f, 0.1f, 0.1f));
-
-    auto ford = scene.addObject(GameObject("ford"));
-    ford->model = core::AssimpLoader::loadModel("models/ford.obj");
-    ford->translate(glm::vec3(30.0f, 0.0f, 0.0f));
-    ford->rotate(glm::vec3(1,1,0), glm::radians(60.0f));
-    ford->scale(glm::vec3(1.0f, 1.0f,  1.0f));
-    cat->addChild(ford);
 
     core::Texture cmgtGatoTexture("textures/CMGaTo_crop.png");
 
@@ -226,18 +260,45 @@ int main() {
     double finishFrameTime = 0.0;
     float deltaTime = 0.0f;
     float rotationStrength = 100.0f;
+
+
     while (!glfwWindowShouldClose(window)) {
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
 
         ImGui_ImplOpenGL3_NewFrame();
         ImGui_ImplGlfw_NewFrame();
         ImGui::NewFrame();
-        ImGui::Begin("Raw Engine v2");
-        ImGui::Text("Hello :)");
-        ImGui::End();
+        myStyle();
+       // ImGui::SetNextWindowSize(ImVec2(200,200));
+        if (ImGui::Begin("My Engine",&IMGuiOpened)) {
+            ImGui::SetCursorPosX(ImGui::GetWindowWidth()-ImGui::CalcTextSize("my button").x-10);
+            if (ImGui::Button("My button")) {
+
+            }
+
+            ImGui::Checkbox("My Checkbox",&checkboxTest);
+
+            ImGui::SliderFloat("Test float slider",&value1,-0.5f,4);
+
+            ImGui::SliderInt("test int slider", &value2,-3,9);
+
+            ImGui::Combo("Combo", &current,items,IM_ARRAYSIZE(items));
+
+            ImGui::SetCursorPosX(ImGui::GetWindowWidth()/2-ImGui::CalcTextSize("Hello :)").x/2);
+            ImGui::Text("Hello :)");
+
+        }ImGui::End();
+
 
         processInput(window);
-        scene.update(deltaTime);
+
+        // Switch scenes with keys
+        if (glfwGetKey(window, GLFW_KEY_1) == GLFW_PRESS)
+            sceneManager.setActiveScene("Monkey");
+        if (glfwGetKey(window, GLFW_KEY_2) == GLFW_PRESS)
+            sceneManager.setActiveScene("Car");
+        sceneManager.update(deltaTime);
         projection = glm::perspective(glm::radians(camera.fov),static_cast<float>(g_width) / g_height,0.1f, 100.0f);
 
         //suzanne.rotate(glm::vec3(0.0f, 1.0f, 0.0f), glm::radians(rotationStrength) * static_cast<float>(deltaTime));
@@ -257,7 +318,7 @@ int main() {
         glActiveTexture(GL_TEXTURE0);
 
         glUseProgram(modelShaderProgram);
-        scene.render(modelShaderProgram, projection, view);
+        sceneManager.render(modelShaderProgram, projection, view);
        // glUniformMatrix4fv(mvpMatrixUniform, 1, GL_FALSE, glm::value_ptr(projection * view * suzanne->model.getModelMatrix()));
 
 
