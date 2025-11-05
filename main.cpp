@@ -118,6 +118,10 @@ int main() {
 #endif
 
     GLFWwindow *window = glfwCreateWindow(g_width, g_height, "LearnOpenGL", NULL, NULL);
+
+    
+
+
     if (window == NULL) {
         printf("Failed to create GLFW window\n");
         glfwTerminate();
@@ -242,8 +246,8 @@ int main() {
     auto cameraPos = glm::vec3(0.0f, 0.0f, 10.0f);
     camera.cameraTarget = glm::vec3(0.0f, 0.0f, 0.0f);
     camera.cameraDirection = glm::normalize(camera.cameraPos - camera.cameraTarget);
-    camera.up = glm::vec3(0.0f, 1.0f, 0.0f);
-    camera.cameraRight = glm::normalize(glm::cross(camera.up, camera.cameraDirection));
+
+    camera.cameraRight = glm::normalize(glm::cross(glm::vec3(0,1,0), camera.cameraDirection));
     camera.cameraUp = glm::cross(camera.cameraDirection, camera.cameraRight);
     //VP
     glm::mat4 view = glm::lookAt(camera.cameraPos, camera.cameraTarget, camera.cameraUp);

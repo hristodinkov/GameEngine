@@ -18,16 +18,16 @@ public:
     glm::vec3 cameraPos;
     glm::vec3 cameraTarget;
     glm::vec3 cameraDirection;
-    glm::vec3 up;
-    glm::vec3 cameraRight;
     glm::vec3 cameraUp;
+    glm::vec3 cameraRight;
+    glm::vec3 cameraForward;
     float speed;
 
 
     bool rotating = false;
     double lastX = 0.0;
     double lastY = 0.0;
-    float yRotation = -90.0f;
+    float yRotation = 0.0f;
     float xRotation = 0.0f;
     float sensitivity = 0.1f;
 

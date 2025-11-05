@@ -19,9 +19,9 @@ void SceneManager::setActiveScene(const std::string& name) {
     auto sceneToActivate = scenesDictionary.find(name); //scenes.end() is a special iterator that points one past the last valid element in the map
     if (sceneToActivate != scenesDictionary.end()) {
         currentScene = sceneToActivate->second;
-        std::cout << "Switched to scene: " << name << std::endl;
+        //std::cout << "Switched to scene: " << name << std::endl;
     } else {
-        std::cerr << "Scene not found: " << name << std::endl;
+        //std::cerr << "Scene not found: " << name << std::endl;
     }
 }
 

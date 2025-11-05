@@ -1,10 +1,12 @@
 ﻿//
 // Created by Hristo Dinkov on 13.10.2025 г..
 //
+#pragma once
 
 #include "Camera.h"
 
-
+#include <glm/ext/matrix_transform.hpp>
+#include <glm/gtc/type_ptr.hpp>
 
 
 // glm::vec3 cameraPos = glm::vec3(0.0f, 0.0f, 10.0f);
@@ -62,21 +64,44 @@ void Camera::Rotate(GLFWwindow *window) {
         lastX = xpos;
         lastY = ypos;
 
-        float sensitivity = 0.002f;
+        float sensitivity = 0.02f;
         xoffset *= sensitivity;
         yoffset *= sensitivity;
-        //around world up vector
-        this->rotate(glm::vec3(0.0f, 1.0f, 0.0f), (float)xoffset);
 
-        // Compute camera right vector
-        glm::vec3 up      = glm::vec3(0.0f, 1.0f, 0.0f); // always world up
-        glm::vec3 forward = -glm::normalize(glm::vec3(modelMatrix[2]));
-        glm::vec3 right   = glm::normalize(glm::cross(forward, up));
+        // 1. Актуализираме ъглите (тези са член-променливи на Camera)
+        // yRotation е Yaw (ляво/дясно), управлява се от X на мишката
+        yRotation += (float)xoffset;
 
-        // Rotate around camera right for pitch
-        this->rotate(right, (float)yoffset);
+        // xRotation е Pitch (горе/долу), управлява се от Y на мишката
+        xRotation += (float)yoffset;
 
+        // 2. Ограничаваме ъгъла (Pitch), за да избегнем "преобръщане"
+        // Това е най-важната част!
+        if (xRotation > 89.0f) {
+            xRotation = 89.0f;
+        }
+        if (xRotation < -89.0f) {
+            xRotation = -89.0f;
+        }
 
+        // 3. Запазваме настоящата позиция на камерата
+        // (Твоята функция Move() се грижи за тази стойност)
+        glm::vec3 currentPosition = glm::vec3(modelMatrix[3]);
+
+        // 4. Изчисляваме НОВА, ЧИСТА матрица на ротация от ъглите
+
+        // Първо въртене около световната Y-ос (Yaw)
+        glm::mat4 rotationMatrix = glm::rotate(glm::mat4(1.0f), glm::radians(yRotation), glm::vec3(0.0f, 1.0f, 0.0f));
+
+        // След това въртене около локалната X-ос (Pitch)
+        // Забележи, че я прилагаме към *вече* завъртяната yaw матрица
+        rotationMatrix = glm::rotate(rotationMatrix, glm::radians(xRotation), glm::vec3(1.0f, 0.0f, 0.0f));
+
+        // 5. Задаваме новата 'modelMatrix' да бъде само ротацията...
+        modelMatrix = rotationMatrix;
+
+        // 6. ... и след това връщаме позицията на мястото й.
+        modelMatrix[3] = glm::vec4(currentPosition, 1.0f);
     }
     else {
         rotating = false;
