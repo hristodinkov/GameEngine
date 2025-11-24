@@ -31,6 +31,11 @@ set(IMGUI_SOURCES
         MyClasses/SceneManager.cpp
         MyClasses/SceneManager.h
         MyClasses/Style.h
+        MyClasses/LightObj.cpp
+        MyClasses/LightObj.h
+        MyClasses/Translate.cpp
+        MyClasses/Translate.h
+        MyClasses/ModelShaderUniform.h
 )
 
 add_executable(RawEngine main.cpp

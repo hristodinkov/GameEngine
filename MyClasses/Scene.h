@@ -14,14 +14,11 @@ class Scene {
 public:
     std::vector<std::shared_ptr<GameObject>> objects;
 
-    std::shared_ptr<GameObject> addObject(std::shared_ptr<GameObject> obj);
-    std::shared_ptr<GameObject> addObject(const GameObject& obj);
+    std::shared_ptr<GameObject> addObject(std::shared_ptr<GameObject> obj,...);
+    std::shared_ptr<GameObject> addObject(const GameObject& obj,...);
     void update(float deltaTime);
 
-    void render (GLuint shaderProgram,const glm::mat4& projection, const glm::mat4& view) {
-        for (auto& obj : objects)
-            obj->render(shaderProgram, projection, view);
-    }
+    void render (GLuint shaderProgram,const glm::mat4& projection, const glm::mat4& view) ;
 };
 
 #endif //RAWENGINE_SCENE_H

@@ -25,6 +25,7 @@ namespace core {
         for(unsigned int i = 0; i < node->mNumMeshes; i++)
         {
             aiMesh *mesh = scene->mMeshes[node->mMeshes[i]];
+            printf("%s\n", mesh->mName.data);
             meshes.push_back(processMesh(mesh, scene));
         }
         for(unsigned int i = 0; i < node->mNumChildren; i++)

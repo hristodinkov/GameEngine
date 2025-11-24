@@ -6,21 +6,23 @@
 
 #include <glm/gtc/type_ptr.hpp>
 
+#include "ModelShaderUniform.h"
+
 GameObject::GameObject(std::string name) : name(std::move(name)) {}
 
-void GameObject::addChild(std::shared_ptr<GameObject> child) {
+void GameObject::addChild(std::shared_ptr<GameObject> child,...) {
     child->parent = this;
     children.push_back(child);
 }
 
-std::shared_ptr<GameObject> GameObject::addChild(const GameObject& child) {
+std::shared_ptr<GameObject> GameObject::addChild(const GameObject& child,...) {
     auto newChild = std::make_shared<GameObject>(child);
     newChild->parent = this;
     children.push_back(newChild);
     return newChild;
 }
 
-void GameObject::addBehavior(std::shared_ptr<Behavior> behavior) {
+void GameObject::addBehavior(std::shared_ptr<Behavior> behavior,...) {
     behaviors.push_back(behavior);
     behavior->owner = this;
 }
@@ -45,6 +47,16 @@ void GameObject::render(GLuint shaderProgram,const glm::mat4& projection,const g
     if (model.has_value()) {
         glm::mat4 mvp = projection * view * getWorldTransform();
         GLint mvpLoc = glGetUniformLocation(shaderProgram, "mvpMatrix");
+
+        glUniformMatrix4fv(glGetUniformLocation(shaderProgram, "modelMatrix"),
+    1, GL_FALSE, glm::value_ptr(modelMatrix));
+
+        glUniformMatrix4fv(glGetUniformLocation(shaderProgram, "viewMatrix"),
+            1, GL_FALSE, glm::value_ptr(view));
+
+        glUniformMatrix4fv(glGetUniformLocation(shaderProgram, "projMatrix"),
+            1, GL_FALSE, glm::value_ptr(projection));
+
         glUniformMatrix4fv(mvpLoc, 1, GL_FALSE, glm::value_ptr(mvp));
         model->render();
     }
