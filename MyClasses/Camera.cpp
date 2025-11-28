@@ -20,6 +20,8 @@ glm::vec3 Camera::getCameraPos() const {
     return this->cameraPos;
 }
 void Camera::Move(GLFWwindow *window) {
+
+
     if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS) {
         this->translate(glm::vec3(0,0,-speed));
     }

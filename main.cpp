@@ -43,6 +43,7 @@ int g_width = 1200;
 int g_height = 800;
 Camera camera;
 bool IMGuiOpened = true;
+bool IMGuiOpenedCarWindow = true;
 bool checkboxTest = false;
 float value1 = 0.1f;
 int value2 =1;
@@ -177,8 +178,9 @@ int main() {
     modelUniforms.ambientStrength = glGetUniformLocation(modelShaderProgram, "ambientStrength");
     modelUniforms.specularStrength = glGetUniformLocation(modelShaderProgram, "specularStrength");
     modelUniforms.shininess = glGetUniformLocation(modelShaderProgram, "shininess");
+    modelUniforms.lightColor = glGetUniformLocation(modelShaderProgram, "lightColor");
 
-    modelUniforms.texture0          = glGetUniformLocation(modelShaderProgram, "texture0");
+    modelUniforms.texture0 = glGetUniformLocation(modelShaderProgram, "texture0");
     glGetProgramiv(modelShaderProgram, GL_LINK_STATUS, &success);
     if (!success) {
         glGetProgramInfoLog(modelShaderProgram, 512, NULL, infoLog);
@@ -239,13 +241,13 @@ int main() {
     suzanne->model = core::AssimpLoader::loadModel("models/nonormalmonkey.obj");
     suzanne->translate(glm::vec3(-2.0f, 0.0f, 0.0f));
     //suzanne->addBehavior(std::make_shared<Translate>(1.0f,glm::vec3(0.1f, 0.0f, 0.0f)));
-    suzanne->addBehavior(std::make_shared<Rotate>(
-        glm::vec3(0, 1, 0), glm::radians(30.0f)
-    ));
+    // suzanne->addBehavior(std::make_shared<Rotate>(
+    //     glm::vec3(0, 1, 0), glm::radians(30.0f)
+    // ));
 
     std::shared_ptr<LightObj> mainLight = nullptr;
     //auto light = scene1->addObject(GameObject("Light"));
-    auto light = std::make_shared<LightObj>(glm::vec3(0.0f, 10.0f, 0.0f), glm::vec4(1.0f, 0.0f, 0.0f, 0.0f),10);
+    auto light = std::make_shared<LightObj>(glm::vec3(0.0f, 10.0f, 0.0f), glm::vec4(184.0f/256.0f, 23.0f/256.0f, 222.0f/256.0f, 0.0f),10);
     mainLight = std::move(light);
     auto pointlight = scene1->addObject(GameObject("PointLight"));
     //pointlight->translate(light->getPos());
@@ -260,7 +262,13 @@ int main() {
         glm::vec3(1, 0, 0), glm::radians(60.0f)
     ));
 
-
+    auto car2 = scene1->addObject(GameObject("Car2"));
+    car2->model = core::AssimpLoader::loadModel("models/car.obj");
+    car2->translate(glm::vec3(0.0f, 0.0f, -50.0f));
+    //car->scale(glm::vec3(0.01f, 0.01f, 0.01f));
+    // car->addBehavior(std::make_shared<Rotate>(
+    //     glm::vec3(1, 0, 0), glm::radians(60.0f)
+    // ));
     core::Texture cmgtGatoTexture("textures/CMGaTo_crop.png");
 
     glm::vec4 clearColor = glm::vec4(0.2f, 0.2f, 0.2f, 1.0f);
@@ -293,10 +301,12 @@ int main() {
 
     glm::vec3 guiLightPos = mainLight ? mainLight->getPos() : glm::vec3(0.0f, 3.0f, 0.0f);
     glm::vec3 guiLightColor = mainLight ? glm::vec3(mainLight->getColor()) : glm::vec3(1.0f);
-    float guiShininess = 30.0f;
-    float guiSpecular = 1.0;
-    float guiAmbient = 1.0f;
-    float guiLightRadius = 10.0f;
+    float guiShininess = 75.0f;
+    float guiSpecular = 42.0;
+    float guiAmbient = 0.25f;
+    float guiLightRadius = 35.0f;
+
+    glm::vec3 carPos = car2->getPos();
 
     float aspect = static_cast<float>(g_width) / g_height;
     while (!glfwWindowShouldClose(window)) {
@@ -308,11 +318,11 @@ int main() {
         ImGui::NewFrame();
         myStyle();
        // ImGui::SetNextWindowSize(ImVec2(200,200));
-        if (ImGui::Begin("My Engine",&IMGuiOpened)) {
-            ImGui::SetCursorPosX(ImGui::GetWindowWidth()-ImGui::CalcTextSize("my button").x-10);
-            if (ImGui::Button("My button")) {
-
-            }
+        if (ImGui::Begin("Let it be light",&IMGuiOpened)) {
+            //ImGui::SetCursorPosX(ImGui::GetWindowWidth()-ImGui::CalcTextSize("my button").x-10);
+            // if (ImGui::Button("My button")) {
+            //
+            // }
 
             // ImGui::Checkbox("My Checkbox",&checkboxTest);
             //
@@ -325,16 +335,21 @@ int main() {
             // ImGui::SetCursorPosX(ImGui::GetWindowWidth()/2-ImGui::CalcTextSize("Hello :)").x/2);
             // ImGui::Text("Hello :)");
 
-            ImGui::DragFloat3("Light Position", glm::value_ptr(guiLightPos), 10.0f);
+            ImGui::SliderFloat3("Light Position", glm::value_ptr(guiLightPos), 0.0f, 10.0f);
             ImGui::ColorEdit3("Light Color", glm::value_ptr(guiLightColor));
             ImGui::SliderFloat("Shininess", &guiShininess, 1.0f, 512.0f);
-            ImGui::SliderFloat("Specular Strength", &guiSpecular, 0.0f, 5.0f);
+            ImGui::SliderFloat("Specular Strength", &guiSpecular, 0.0f, 256.0f);
             ImGui::SliderFloat("Ambient Strength", &guiAmbient, 0.0f, 1.0f);
-            ImGui::SliderFloat("Light Radis", &guiLightRadius, 0.0f, 500.0f);
+            ImGui::SliderFloat("Light Radis", &guiLightRadius, 0.0f, 100.0f);
 
 
         }ImGui::End();
 
+        if (ImGui::Begin("MoveCar",&IMGuiOpenedCarWindow)) {
+            if (ImGui::SliderFloat3("Position",glm::value_ptr(car2->position),-80.0f,100.0f)) {
+                car2->setPos(car2->position);
+            }
+        }ImGui::End();
 
         processInput(window);
 
@@ -366,18 +381,21 @@ int main() {
         glUseProgram(modelShaderProgram);
 
         glUniform3fv(modelUniforms.lightPos, 1, glm::value_ptr(guiLightPos));
-        glUniform3fv(modelUniforms.cameraPos, 1, glm::value_ptr(camera.cameraPos));
+        glUniform3fv(modelUniforms.cameraPos, 1, glm::value_ptr(camera.getPos()));
+
+        printf("Camera position: %f,%f,%f\n",camera.getPos().x,camera.getPos().y,camera.getPos().z);
 
         glUniform1f(modelUniforms.lightRadius, guiLightRadius);
         glUniform1f(modelUniforms.ambientStrength, guiAmbient);
         glUniform1f(modelUniforms.specularStrength, guiSpecular);
         glUniform1f(modelUniforms.shininess, guiShininess);
+        glUniform3fv(modelUniforms.lightColor,1,glm::value_ptr(guiLightColor));
 
         glUniformMatrix4fv(modelUniforms.viewMatrix, 1, GL_FALSE, glm::value_ptr(view));
         glUniformMatrix4fv(modelUniforms.projMatrix, 1, GL_FALSE, glm::value_ptr(projection));
         sceneManager.render(modelShaderProgram, projection, view);
        // glUniformMatrix4fv(mvpMatrixUniform, 1, GL_FALSE, glm::value_ptr(projection * view * suzanne->model.getModelMatrix()));
-
+        // car2->position = carPos;
 
         //suzanne->model.render();
         glBindVertexArray(0);
