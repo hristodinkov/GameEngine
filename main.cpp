@@ -383,7 +383,7 @@ int main() {
         glUniform3fv(modelUniforms.lightPos, 1, glm::value_ptr(guiLightPos));
         glUniform3fv(modelUniforms.cameraPos, 1, glm::value_ptr(camera.getPos()));
 
-        printf("Camera position: %f,%f,%f\n",camera.getPos().x,camera.getPos().y,camera.getPos().z);
+        //printf("Camera position: %f,%f,%f\n",camera.getPos().x,camera.getPos().y,camera.getPos().z);
 
         glUniform1f(modelUniforms.lightRadius, guiLightRadius);
         glUniform1f(modelUniforms.ambientStrength, guiAmbient);

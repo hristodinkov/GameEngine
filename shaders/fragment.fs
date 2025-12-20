@@ -26,12 +26,12 @@ void main()
 
     float distance = length(lightPos-worldPos);
     float d = 1 - distance / lightRadius;
-    if(distance>lightRadius){}
+
 
     float attenuation = 1.0 / (1.0 + 0.5 * d + 0.25 * d * d);
     attenuation = clamp(d, 0.0, 1.0);
 
-    float diffuse = max(dot(normal,lightDirection),0.0)*vec3(1.0,1.0,1.0);
+    float diffuse = max(dot(normal,lightDirection),0.0);//*vec3(1.0,1.0,1.0);
 
     vec3 ambient = ambientStrength * texColor;//*ambientLightColor
 
@@ -45,6 +45,8 @@ void main()
     //vec3 lighting = ambient +(diffuse * texColor + specular) * attenuation*lightColor;
     vec3 lighting = ambient + ((diffuse+specular)*lightColor)/attenuation;
     //vec3 finalColor =  lighting; //+ambient;
-
+    if(distance>lightRadius){
+    lighting = ambient;
+    }
     FragColor = vec4(lighting, 1.0);
 }
