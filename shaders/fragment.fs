@@ -41,9 +41,10 @@ void main()
     //float spec = pow(max(dot(normal, halfDir), 0.0), shininess);
     float spec = pow(max(dot(viewDir, reflectDir), 0.0), shininess);
     vec3 specular = specularStrength * spec * vec3(1.0);
+    //specular *= attenuation;
+    vec3 lighting = ambient +(diffuse * texColor + specular) * attenuation*lightColor;
+    //vec3 lighting = ambient + ((diffuse+specular)*lightColor)/attenuation;
 
-    //vec3 lighting = ambient +(diffuse * texColor + specular) * attenuation*lightColor;
-    vec3 lighting = ambient + ((diffuse+specular)*lightColor)/attenuation;
     //vec3 finalColor =  lighting; //+ambient;
     if(distance>lightRadius){
     lighting = ambient;

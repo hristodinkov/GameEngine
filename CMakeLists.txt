@@ -36,6 +36,14 @@ set(IMGUI_SOURCES
         MyClasses/Translate.cpp
         MyClasses/Translate.h
         MyClasses/ModelShaderUniform.h
+        MyClasses/Shader.cpp
+        MyClasses/Shader.h
+        MyClasses/VBO.cpp
+        MyClasses/VBO.h
+        MyClasses/EBO.cpp
+        MyClasses/EBO.h
+        MyClasses/VAO.cpp
+        MyClasses/VAO.h
 )
 
 add_executable(RawEngine main.cpp

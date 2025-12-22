@@ -112,6 +112,18 @@ void PrintMatrix(glm::mat4 matrix) {
 
 }
 
+float rectangleVertices[]{
+    //Coords    //texCoords
+    1.0f, -1.0f, 1.0f, 0.0f,
+   -1.0f, -1.0f, 0.0f, 0.0f,
+   -1.0f,  1.0f, 0.0f, 1.0f,
+
+    1.0f,  1.0f, 1.0f, 1.0f,
+    1.0f, -1.0f, 1.0f, 0.0f,
+   -1.0f,  1.0f, 0.0f, 1.0f
+
+};
+
 int main() {
     glfwInit();
     glfwWindowHint(GLFW_SAMPLES, 4);
@@ -307,6 +319,42 @@ int main() {
     float guiLightRadius = 35.0f;
 
     glm::vec3 carPos = car2->getPos();
+
+    // unsigned int FBO;
+    // glGenFramebuffers(1, &FBO);
+    // glBindFramebuffer(GL_FRAMEBUFFER, FBO);
+    //
+    // unsigned int framebufferTexture;
+    // glGenTextures(1, &framebufferTexture);
+    // glBindTexture(GL_TEXTURE_2D, framebufferTexture);
+    // glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, g_width, g_height, 0, GL_RGB, GL_UNSIGNED_BYTE, NULL);
+    // glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    // glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    // glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+    // glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+    // glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, framebufferTexture, 0);
+    //
+    // unsigned int renderBuffer;
+    // glGenRenderbuffers(1, &renderBuffer);
+    // glBindRenderbuffer(GL_RENDERBUFFER, renderBuffer);
+    // glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8, g_width, g_height);
+    // glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL, GL_RENDERBUFFER, renderBuffer);
+    //
+    // auto fboStatus = glCheckFramebufferStatus(GL_FRAMEBUFFER);
+    // if (fboStatus != GL_FRAMEBUFFER_COMPLETE)
+    //     printf("Framebuffer error: "+fboStatus);
+    //
+    //
+    // unsigned int rectVAO,rectVBO;
+    // glGenVertexArrays(1, &rectVAO);
+    // glGenBuffers(1, &rectVBO);
+    // glBindVertexArray(rectVAO);
+    // glBindBuffer(GL_ARRAY_BUFFER, rectVBO);
+    // glBufferData(GL_ARRAY_BUFFER, sizeof(rectangleVertices), &rectangleVertices, GL_STATIC_DRAW);
+    // glEnableVertexAttribArray(0);
+    // glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 4*sizeof(float), (void*)0);
+    // glEnableVertexAttribArray(1);
+    // glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 4*sizeof(float), (void*)(2*sizeof(float)));
 
     float aspect = static_cast<float>(g_width) / g_height;
     while (!glfwWindowShouldClose(window)) {
