@@ -1,4 +1,4 @@
-#version 400 core
+﻿#version 400 core
 
 out vec4 FragColor;
 
@@ -10,8 +10,6 @@ void main()
 {
     vec4 color = texture(screenTexture, TexCoords);
 
-    vec3 inverted = vec3(1.0) - color.rgb;
-    FragColor = vec4(inverted, 1.0);
-
-
+    float avg = (color.x+color.y+color.z)/3.0f;
+    FragColor = vec4(avg,avg,avg,1.0f);
 }

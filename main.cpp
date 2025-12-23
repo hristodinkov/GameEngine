@@ -18,7 +18,10 @@
 #include "MyClasses/Shader.h"
 #include "MyClasses/Style.h"
 #include "MyClasses/Translate.h"
+#include "MyClasses/PostProcessMode.h"
 
+
+#pragma once
 //#define MAC_CLION
 #define VSTUDIO
 
@@ -163,6 +166,9 @@ int main() {
 
     Shader invertColorsShader("shaders/invertColors.vs","shaders/invertColors.fs");
 
+    Shader greyShader("shaders/invertColors.vs","shaders/greyFramebuffer.fs");
+
+
     core::Mesh quad = core::Mesh::generateQuad();
     core::Model quadModel({quad});
     quadModel.translate(glm::vec3(0,0,-2.5));
@@ -236,6 +242,8 @@ int main() {
     core::Texture stone("textures/stone.jpg");
     core::Texture paint("textures/paint.png");
     core::Texture chalk ("textures/chalk.jpg");
+    core::Texture santa("textures/Santa.jpg");
+    core::Texture tiles("textures/tiles.jpg");
 
     glm::vec4 clearColor = glm::vec4(0.2f, 0.2f, 0.2f, 1.0f);
     glClearColor(clearColor.r,
@@ -282,60 +290,69 @@ int main() {
 
     glm::vec3 carPos = car2->getPos();
 
-    unsigned int FBO;
-    glGenFramebuffers(1, &FBO);
-    glBindFramebuffer(GL_FRAMEBUFFER, FBO);
+    // --- FRAMEBUFFER SETUP ---
+    unsigned int framebuffer;
+    glGenFramebuffers(1, &framebuffer);
+    glBindFramebuffer(GL_FRAMEBUFFER, framebuffer);
 
-    unsigned int framebufferTexture;
-    glGenTextures(1, &framebufferTexture);
-    glBindTexture(GL_TEXTURE_2D, framebufferTexture);
+    // Create texture attachment
+    unsigned int fbTexture;
+    glGenTextures(1, &fbTexture);
+    glBindTexture(GL_TEXTURE_2D, fbTexture);
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, g_width, g_height, 0, GL_RGB, GL_UNSIGNED_BYTE, NULL);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, framebufferTexture, 0);
+    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, fbTexture, 0);
 
-    unsigned int renderBuffer;
-    glGenRenderbuffers(1, &renderBuffer);
-    glBindRenderbuffer(GL_RENDERBUFFER, renderBuffer);
+
+    unsigned int quadVAO, quadVBO;
+    glGenVertexArrays(1, &quadVAO);
+    glGenBuffers(1, &quadVBO);
+
+    glBindVertexArray(quadVAO);
+
+    glBindBuffer(GL_ARRAY_BUFFER, quadVBO);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(rectangleVertices), rectangleVertices, GL_STATIC_DRAW);
+
+    // position attribute (vec2)
+    glEnableVertexAttribArray(0);
+    glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(float), (void*)0);
+
+    // texcoord attribute (vec2)
+    glEnableVertexAttribArray(1);
+    glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(float), (void*)(2 * sizeof(float)));
+
+    glBindVertexArray(0);
+
+    // Create depth + stencil renderbuffer
+    unsigned int rbo;
+    glGenRenderbuffers(1, &rbo);
+    glBindRenderbuffer(GL_RENDERBUFFER, rbo);
     glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8, g_width, g_height);
-    glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL, GL_RENDERBUFFER, renderBuffer);
-
-    auto fboStatus = glCheckFramebufferStatus(GL_FRAMEBUFFER);
-    if (fboStatus != GL_FRAMEBUFFER_COMPLETE)
-        printf("Framebuffer error: %d\n", fboStatus);
+    glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, rbo);
 
 
+
+    // Check completeness
+    if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
+        printf("ERROR: Framebuffer is not complete!\n");
+
+    glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
 
     float aspect = static_cast<float>(g_width) / g_height;
-    while (!glfwWindowShouldClose(window)) {
-        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
+    int currentPostProcessingMode = 0;
 
+    while (!glfwWindowShouldClose(window))
+    {
+        // --- IMGUI SETUP ---
         ImGui_ImplOpenGL3_NewFrame();
         ImGui_ImplGlfw_NewFrame();
         ImGui::NewFrame();
         myStyle();
-       // ImGui::SetNextWindowSize(ImVec2(200,200));
+
         if (ImGui::Begin("Let it be light",&IMGuiOpened)) {
-            //ImGui::SetCursorPosX(ImGui::GetWindowWidth()-ImGui::CalcTextSize("my button").x-10);
-            // if (ImGui::Button("My button")) {
-            //
-            // }
-
-            // ImGui::Checkbox("My Checkbox",&checkboxTest);
-            //
-            // ImGui::SliderFloat("Test float slider",&value1,-0.5f,4);
-            //
-            // ImGui::SliderInt("test int slider", &value2,-3,9);
-            //
-            // ImGui::Combo("Combo", &current,items,IM_ARRAYSIZE(items));
-            //
-            // ImGui::SetCursorPosX(ImGui::GetWindowWidth()/2-ImGui::CalcTextSize("Hello :)").x/2);
-            // ImGui::Text("Hello :)");
-
             ImGui::SliderFloat3("Light Position", glm::value_ptr(guiLightPos), 0.0f, 10.0f);
             ImGui::ColorEdit3("Light Color", glm::value_ptr(guiLightColor));
             ImGui::SliderFloat("Shininess", &guiShininess, 1.0f, 512.0f);
@@ -343,18 +360,18 @@ int main() {
             ImGui::SliderFloat("Ambient Strength", &guiAmbient, 0.0f, 1.0f);
             ImGui::SliderFloat("Light Radis", &guiLightRadius, 0.0f, 100.0f);
 
-
-        }ImGui::End();
+            ImGui::Combo("Post Process", (int*)&currentPostProcessingMode, "None\0Grayscale\0Invert\0");
+        } ImGui::End();
 
         if (ImGui::Begin("MoveCar",&IMGuiOpenedCarWindow)) {
             if (ImGui::SliderFloat3("Position",glm::value_ptr(car2->position),-80.0f,100.0f)) {
                 car2->setPos(car2->position);
             }
-        }ImGui::End();
+        } ImGui::End();
 
         processInput(window);
 
-        // Switch scenes with keys
+
         if (glfwGetKey(window, GLFW_KEY_1) == GLFW_PRESS)
             sceneManager.setActiveScene("Monkey");
         if (glfwGetKey(window, GLFW_KEY_2) == GLFW_PRESS)
@@ -362,72 +379,89 @@ int main() {
 
         sceneManager.update(deltaTime);
 
-
-        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
-
-        projection = glm::perspective(glm::radians(camera.fov),aspect,0.1f, 100.0f);
-
+        projection = glm::perspective(glm::radians(camera.fov), aspect, 0.1f, 100.0f);
         view = glm::inverse(camera.getModelMatrix());
 
-        // textureShader.Activate();
-        //
-        // textureShader.SetMat4Uniform("mvpMatrix",projection * view * quadModel.getModelMatrix());
-        //
-        // textureShader.SetIntUniform("texture0", 0);
-        //
-        // glActiveTexture(GL_TEXTURE0);
-        // glBindTexture(GL_TEXTURE_2D, cmgtGatoTexture.getId());
-        //
-        // quadModel.render();
+        // ==================================
+        //  RENDER SCENE INTO FRAMEBUFFER
+        // ==================================
+        if (currentPostProcessingMode == 0) {
+            // NONE → render directly to screen
+            glBindFramebuffer(GL_FRAMEBUFFER, 0);
+        } else {
+            // Any effect → render into framebuffer
+            glBindFramebuffer(GL_FRAMEBUFFER, framebuffer);
+        }
+
+        glViewport(0, 0, g_width, g_height);
+        glEnable(GL_DEPTH_TEST);
+        glDepthMask(GL_TRUE);
+        glDepthFunc(GL_LESS);
+
+        glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
         modelShader.Activate();
-
         modelShader.SetVec3Uniform("lightPos", guiLightPos);
         modelShader.SetVec3Uniform("cameraPos", camera.getPos());
         modelShader.SetVec3Uniform("lightColor", guiLightColor);
-
         modelShader.SetFloatUniform("lightRadius", guiLightRadius);
         modelShader.SetFloatUniform("ambientStrength", guiAmbient);
         modelShader.SetFloatUniform("specularStrength", guiSpecular);
         modelShader.SetFloatUniform("shininess", guiShininess);
-
         modelShader.SetMat4Uniform("viewMatrix", view);
         modelShader.SetMat4Uniform("projMatrix", projection);
-
-        modelShader.BindTexture("textures/chalk.jpg",chalk.getId(),0);
+        modelShader.BindTexture("textures/CMGaTo_crop.jpg", cmgtGatoTexture.getId(), 0);
 
         sceneManager.render(modelShader, projection, view);
 
-
-
-
-        glBindVertexArray(0);
-
-        // glBindFramebuffer(GL_FRAMEBUFFER, FBO);
-        // glEnable(GL_DEPTH_TEST);
-
-        // invertColorsShader.Activate();
-        // invertColorsShader.SetIntUniform("screenTexture", 0);
-
         glBindFramebuffer(GL_FRAMEBUFFER, 0);
-        //invertColorsShader.Activate();
-        //glBindVertexArray(rectVAO);
-        //glDisable(GL_DEPTH_TEST);
-        //glBindTexture(GL_TEXTURE_2D, framebufferTexture);
-        //glDrawArrays(GL_TRIANGLES, 0, 6);
+
+        // ============================================================
+        // === DRAW FULLSCREEN QUAD USING THE FRAMEBUFFER TEXTURE =====
+        // ============================================================
+        if (currentPostProcessingMode != 0) {
+            glDisable(GL_DEPTH_TEST);
+            glDisable(GL_CULL_FACE);
+
+            glViewport(0, 0, g_width, g_height);
+            glClear(GL_COLOR_BUFFER_BIT);
+
+            Shader* activeShader = nullptr;
+
+            if (currentPostProcessingMode == 1) {
+                // Grayscale
+                activeShader = &greyShader;
+            }
+            else if (currentPostProcessingMode == 2) {
+                // Invert
+                activeShader = &invertColorsShader;
+            }
+
+            if (activeShader != nullptr) {
+                activeShader->Activate();
+                activeShader->SetIntUniform("screenTexture", 0);
+
+                glActiveTexture(GL_TEXTURE0);
+                glBindTexture(GL_TEXTURE_2D, fbTexture);
+
+                glBindVertexArray(quadVAO);
+                glDrawArrays(GL_TRIANGLES, 0, 6);
+                glBindVertexArray(0);
+            }
+
+            glEnable(GL_CULL_FACE);
+        }
 
         ImGui::Render();
         ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
         glfwSwapBuffers(window);
         glfwPollEvents();
+
         finishFrameTime = glfwGetTime();
         deltaTime = static_cast<float>(finishFrameTime - currentTime);
-
         currentTime = finishFrameTime;
     }
-
-
     ImGui_ImplOpenGL3_Shutdown();
     ImGui_ImplGlfw_Shutdown();
     ImGui::DestroyContext();

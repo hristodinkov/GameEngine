@@ -7,15 +7,25 @@
 
 
 std::string get_file_contents(const char *filename) {
-    std::ifstream fileStream(filename, std::ios::in);
+    std::ifstream fileStream(filename, std::ios::in | std::ios::binary);
     if (!fileStream.is_open()) {
         printf("Could not open file: %s\n", filename);
         return "";
     }
     std::stringstream buffer;
     buffer << fileStream.rdbuf();
-    return buffer.str();
+    std::string text = buffer.str();
+    
+    if (text.size() >= 3 &&
+        (unsigned char)text[0] == 0xEF &&
+        (unsigned char)text[1] == 0xBB &&
+        (unsigned char)text[2] == 0xBF) {
+        text.erase(0, 3);
+        }
+
+    return text;
 }
+
 
 Shader::Shader(const char *vertexFile, const char *fragmentFile) {
     std::string vertexCode = get_file_contents(vertexFile);
@@ -46,8 +56,8 @@ Shader::Shader(const char *vertexFile, const char *fragmentFile) {
 
     glDeleteShader(vertexShader);
     glDeleteShader(fragmentShader);
-
 }
+
 
 void Shader::Activate() const{
     glUseProgram(ID);
