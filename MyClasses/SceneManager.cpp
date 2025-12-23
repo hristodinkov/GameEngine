@@ -34,9 +34,10 @@ void SceneManager::update(float deltaTime) {
         currentScene->update(deltaTime);
 }
 
-void SceneManager::render(GLuint shaderProgram,
-                          const glm::mat4& projection,
-                          const glm::mat4& view) {
-    if (currentScene)
-        currentScene->render(shaderProgram, projection, view);
+void SceneManager::render(Shader& shader,const glm::mat4& projection,const glm::mat4& view)
+{
+    if (!currentScene)
+        return;
+
+    currentScene->render(shader, projection, view);
 }

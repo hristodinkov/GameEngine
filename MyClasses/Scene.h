@@ -18,7 +18,8 @@ public:
     std::shared_ptr<GameObject> addObject(const GameObject& obj,...);
     void update(float deltaTime);
 
-    void render (GLuint shaderProgram,const glm::mat4& projection, const glm::mat4& view) ;
+    void render(Shader& shader,const glm::mat4& projection,const glm::mat4& view);
+
 };
 
 #endif //RAWENGINE_SCENE_H

@@ -19,9 +19,10 @@ void Scene::update(float deltaTime) {
         obj->update(deltaTime);
 }
 
-void Scene::render(GLuint shaderProgram, const glm::mat4 &projection, const glm::mat4 &view) {
+void Scene::render(Shader& shader,const glm::mat4& projection,const glm::mat4& view)
+{
     for (auto& obj : objects)
-        obj->render(shaderProgram, projection, view);
+        obj->render(shader, projection, view);
 }
 
 

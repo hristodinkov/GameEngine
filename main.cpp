@@ -11,11 +11,11 @@
 #include "core/mesh.h"
 #include "core/assimpLoader.h"
 #include "core/texture.h"
-#include "MyClasses/ModelShaderUniform.h"
 
 #include "MyClasses/Rotate.h"
 #include "MyClasses/Scene.h"
 #include "MyClasses/SceneManager.h"
+#include "MyClasses/Shader.h"
 #include "MyClasses/Style.h"
 #include "MyClasses/Translate.h"
 
@@ -38,7 +38,7 @@
 #endif
 
 Style style;
-ModelShaderUniforms modelUniforms;
+
 int g_width = 1200;
 int g_height = 800;
 Camera camera;
@@ -72,35 +72,24 @@ void framebufferSizeCallback(GLFWwindow *window,
         glfwSetInputMode(window, GLFW_RAW_MOUSE_MOTION, GLFW_TRUE);
 }
 
+//RawEngine old methods
 
-
-std::string readFileToString(const std::string &filePath) {
-    std::ifstream fileStream(filePath, std::ios::in);
-    if (!fileStream.is_open()) {
-        printf("Could not open file: %s\n", filePath.c_str());
-        return "";
-    }
-    std::stringstream buffer;
-    buffer << fileStream.rdbuf();
-    return buffer.str();
-}
-
-GLuint generateShader(const std::string &shaderPath, GLuint shaderType) {
-    printf("Loading shader: %s\n", shaderPath.c_str());
-    const std::string shaderText = readFileToString(shaderPath);
-    const GLuint shader = glCreateShader(shaderType);
-    const char *s_str = shaderText.c_str();
-    glShaderSource(shader, 1, &s_str, nullptr);
-    glCompileShader(shader);
-    GLint success = 0;
-    glGetShaderiv(shader, GL_COMPILE_STATUS, &success);
-    if (!success) {
-        char infoLog[512];
-        glGetShaderInfoLog(shader, 512, NULL, infoLog);
-        printf("Error! Shader issue [%s]: %s\n", shaderPath.c_str(), infoLog);
-    }
-    return shader;
-}
+// GLuint generateShader(const std::string &shaderPath, GLuint shaderType) {
+//     printf("Loading shader: %s\n", shaderPath.c_str());
+//     const std::string shaderText = readFileToString(shaderPath);
+//     const GLuint shader = glCreateShader(shaderType);
+//     const char *s_str = shaderText.c_str();
+//     glShaderSource(shader, 1, &s_str, nullptr);
+//     glCompileShader(shader);
+//     GLint success = 0;
+//     glGetShaderiv(shader, GL_COMPILE_STATUS, &success);
+//     if (!success) {
+//         char infoLog[512];
+//         glGetShaderInfoLog(shader, 512, NULL, infoLog);
+//         printf("Error! Shader issue [%s]: %s\n", shaderPath.c_str(), infoLog);
+//     }
+//     return shader;
+// }
 
 void PrintMatrix(glm::mat4 matrix) {
     for (int r=0;r<4;r++) {
@@ -136,9 +125,6 @@ int main() {
 
     GLFWwindow *window = glfwCreateWindow(g_width, g_height, "LearnOpenGL", NULL, NULL);
 
-
-
-
     if (window == NULL) {
         printf("Failed to create GLFW window\n");
         glfwTerminate();
@@ -169,48 +155,13 @@ int main() {
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
-    const GLuint modelVertexShader = generateShader("shaders/modelVertex.vs", GL_VERTEX_SHADER);
-    const GLuint fragmentShader = generateShader("shaders/fragment.fs", GL_FRAGMENT_SHADER);
-    const GLuint textureShader = generateShader("shaders/texture.fs", GL_FRAGMENT_SHADER);
-
     int success;
     char infoLog[512];
-    const unsigned int modelShaderProgram = glCreateProgram();
-    glAttachShader(modelShaderProgram, modelVertexShader);
-    glAttachShader(modelShaderProgram, fragmentShader);
-    glLinkProgram(modelShaderProgram);
 
-    modelUniforms.modelMatrix = glGetUniformLocation(modelShaderProgram, "modelMatrix");
-    modelUniforms.viewMatrix = glGetUniformLocation(modelShaderProgram, "viewMatrix");
-    modelUniforms.projMatrix = glGetUniformLocation(modelShaderProgram, "projMatrix");
+    Shader modelShader("shaders/modelVertex.vs","shaders/fragment.fs");
+    Shader textureShader("shaders/modelVertex.vs","shaders/texture.fs");
 
-    modelUniforms.lightPos = glGetUniformLocation(modelShaderProgram, "lightPos");
-    modelUniforms.cameraPos = glGetUniformLocation(modelShaderProgram, "cameraPos");
-    modelUniforms.lightRadius = glGetUniformLocation(modelShaderProgram, "lightRadius");
-    modelUniforms.ambientStrength = glGetUniformLocation(modelShaderProgram, "ambientStrength");
-    modelUniforms.specularStrength = glGetUniformLocation(modelShaderProgram, "specularStrength");
-    modelUniforms.shininess = glGetUniformLocation(modelShaderProgram, "shininess");
-    modelUniforms.lightColor = glGetUniformLocation(modelShaderProgram, "lightColor");
-
-    modelUniforms.texture0 = glGetUniformLocation(modelShaderProgram, "texture0");
-    glGetProgramiv(modelShaderProgram, GL_LINK_STATUS, &success);
-    if (!success) {
-        glGetProgramInfoLog(modelShaderProgram, 512, NULL, infoLog);
-        printf("Error! Making Shader Program: %s\n", infoLog);
-    }
-    const unsigned int textureShaderProgram = glCreateProgram();
-    glAttachShader(textureShaderProgram, modelVertexShader);
-    glAttachShader(textureShaderProgram, textureShader);
-    glLinkProgram(textureShaderProgram);
-    glGetProgramiv(textureShaderProgram, GL_LINK_STATUS, &success);
-    if (!success) {
-        glGetProgramInfoLog(textureShaderProgram, 512, NULL, infoLog);
-        printf("Error! Making Shader Program: %s\n", infoLog);
-    }
-
-    glDeleteShader(modelVertexShader);
-    glDeleteShader(fragmentShader);
-    glDeleteShader(textureShader);
+    Shader invertColorsShader("shaders/invertColors.vs","shaders/invertColors.fs");
 
     core::Mesh quad = core::Mesh::generateQuad();
     core::Model quadModel({quad});
@@ -302,9 +253,6 @@ int main() {
     camera.translate(cameraPos);
     //camera.rotate(glm::vec3(1,0,0), -10.0f * 3.1415f / 180);
     camera.speed = 0.005f;
-    GLint mvpMatrixUniform = glGetUniformLocation(modelShaderProgram, "mvpMatrix");
-    GLint textureModelUniform = glGetUniformLocation(textureShaderProgram, "mvpMatrix");
-    GLint textureUniform = glGetUniformLocation(textureShaderProgram, "text");
 
     double currentTime = glfwGetTime();
     double finishFrameTime = 0.0;
@@ -408,48 +356,57 @@ int main() {
             sceneManager.setActiveScene("Car");
         sceneManager.update(deltaTime);
 
+        //glBindFramebuffer(GL_FRAMEBUFFER, FBO);
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+        glEnable(GL_DEPTH_TEST);
+
         projection = glm::perspective(glm::radians(camera.fov),aspect,0.1f, 100.0f);
 
-        //suzanne.rotate(glm::vec3(0.0f, 1.0f, 0.0f), glm::radians(rotationStrength) * static_cast<float>(deltaTime));
+        view = glm::inverse(camera.getModelMatrix());
 
-        view = glm::inverse(
-            camera.getModelMatrix()); //glm::lookAt(camera.cameraPos, camera.cameraTarget, camera.cameraUp);
-        //PrintMatrix(view);
+        textureShader.Activate();
 
-        glUseProgram(textureShaderProgram);
+        textureShader.SetMat4Uniform("mvpMatrix",projection * view * quadModel.getModelMatrix());
 
-        glUniformMatrix4fv(textureModelUniform, 1, GL_FALSE, glm::value_ptr(projection * view * quadModel.getModelMatrix()));
+        textureShader.SetIntUniform("texture0", 0);
+
         glActiveTexture(GL_TEXTURE0);
-        glUniform1i(textureUniform, 0);
         glBindTexture(GL_TEXTURE_2D, cmgtGatoTexture.getId());
+
         quadModel.render();
+
+        modelShader.Activate();
+
+        modelShader.SetVec3Uniform("lightPos", guiLightPos);
+        modelShader.SetVec3Uniform("cameraPos", camera.getPos());
+        modelShader.SetVec3Uniform("lightColor", guiLightColor);
+
+        modelShader.SetFloatUniform("lightRadius", guiLightRadius);
+        modelShader.SetFloatUniform("ambientStrength", guiAmbient);
+        modelShader.SetFloatUniform("specularStrength", guiSpecular);
+        modelShader.SetFloatUniform("shininess", guiShininess);
+
+        modelShader.SetMat4Uniform("viewMatrix", view);
+        modelShader.SetMat4Uniform("projMatrix", projection);
+
+        sceneManager.render(modelShader, projection, view);
+
+        invertColorsShader.Activate();
+        invertColorsShader.SetIntUniform("screenTexture", 0);
+
+
         glBindVertexArray(0);
-        glActiveTexture(GL_TEXTURE0);
 
-        glUseProgram(modelShaderProgram);
-
-        glUniform3fv(modelUniforms.lightPos, 1, glm::value_ptr(guiLightPos));
-        glUniform3fv(modelUniforms.cameraPos, 1, glm::value_ptr(camera.getPos()));
-
-        //printf("Camera position: %f,%f,%f\n",camera.getPos().x,camera.getPos().y,camera.getPos().z);
-
-        glUniform1f(modelUniforms.lightRadius, guiLightRadius);
-        glUniform1f(modelUniforms.ambientStrength, guiAmbient);
-        glUniform1f(modelUniforms.specularStrength, guiSpecular);
-        glUniform1f(modelUniforms.shininess, guiShininess);
-        glUniform3fv(modelUniforms.lightColor,1,glm::value_ptr(guiLightColor));
-
-        glUniformMatrix4fv(modelUniforms.viewMatrix, 1, GL_FALSE, glm::value_ptr(view));
-        glUniformMatrix4fv(modelUniforms.projMatrix, 1, GL_FALSE, glm::value_ptr(projection));
-        sceneManager.render(modelShaderProgram, projection, view);
-       // glUniformMatrix4fv(mvpMatrixUniform, 1, GL_FALSE, glm::value_ptr(projection * view * suzanne->model.getModelMatrix()));
-        // car2->position = carPos;
-
-        //suzanne->model.render();
-        glBindVertexArray(0);
 
         ImGui::Render();
         ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
+
+        glBindFramebuffer(GL_FRAMEBUFFER, 0);
+        invertColorsShader.Activate();
+        //glBindVertexArray(rectVAO);
+        glDisable(GL_DEPTH_TEST);
+        //glBindTexture(GL_TEXTURE_2D, framebufferTexture);
+        //glDrawArrays(GL_TRIANGLES, 0, 6);
 
         glfwSwapBuffers(window);
         glfwPollEvents();
@@ -457,10 +414,9 @@ int main() {
         deltaTime = static_cast<float>(finishFrameTime - currentTime);
 
         currentTime = finishFrameTime;
-
     }
 
-    glDeleteProgram(modelShaderProgram);
+
     ImGui_ImplOpenGL3_Shutdown();
     ImGui_ImplGlfw_Shutdown();
     ImGui::DestroyContext();

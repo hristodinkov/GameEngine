@@ -12,6 +12,7 @@
 
 #include "Transform.h"
 #include "Behavior.h"
+#include "Shader.h"
 #include "Translate.h"
 #include "../core/model.h"
 
@@ -38,9 +39,7 @@ public:
 
     glm::mat4 getWorldTransform() const;
 
-    virtual void render(GLuint shaderProgram,
-                const glm::mat4& projection,
-                const glm::mat4& view);
+    void render(Shader& shader,const glm::mat4& projection,const glm::mat4& view);
 };
 
 

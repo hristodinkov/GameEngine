@@ -20,9 +20,7 @@ public:
     std::shared_ptr<Scene> getActiveScene() const;
 
     void update(float deltaTime);
-    void render(GLuint shaderProgram,
-                const glm::mat4& projection,
-                const glm::mat4& view);
+    void render(Shader& shader,const glm::mat4& projection,const glm::mat4& view);
 };
 
 

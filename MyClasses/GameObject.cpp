@@ -6,7 +6,6 @@
 
 #include <glm/gtc/type_ptr.hpp>
 
-#include "ModelShaderUniform.h"
 
 GameObject::GameObject(std::string name) : name(std::move(name)) {}
 
@@ -42,25 +41,21 @@ glm::mat4 GameObject::getWorldTransform() const {
     return getModelMatrix();
 }
 
-void GameObject::render(GLuint shaderProgram,const glm::mat4& projection,const glm::mat4& view) {
+void GameObject::render(Shader& shader,const glm::mat4& projection,const glm::mat4& view) {
 
-    if (model.has_value()) {
-        glm::mat4 mvp = projection * view * getWorldTransform();
-        GLint mvpLoc = glGetUniformLocation(shaderProgram, "mvpMatrix");
+    if (!model.has_value())
+        return;
 
-        glUniformMatrix4fv(glGetUniformLocation(shaderProgram, "modelMatrix"),
-    1, GL_FALSE, glm::value_ptr(modelMatrix));
+    glm::mat4 modelMat = getWorldTransform();
+    glm::mat4 mvp = projection * view * modelMat;
 
-        glUniformMatrix4fv(glGetUniformLocation(shaderProgram, "viewMatrix"),
-            1, GL_FALSE, glm::value_ptr(view));
+    shader.SetMat4Uniform("modelMatrix", modelMat);
+    shader.SetMat4Uniform("viewMatrix", view);
+    shader.SetMat4Uniform("projMatrix", projection);
+    shader.SetMat4Uniform("mvpMatrix", mvp);
 
-        glUniformMatrix4fv(glGetUniformLocation(shaderProgram, "projMatrix"),
-            1, GL_FALSE, glm::value_ptr(projection));
-
-        glUniformMatrix4fv(mvpLoc, 1, GL_FALSE, glm::value_ptr(mvp));
-        model->render();
-    }
+    model->render();
 
     for (auto& c : children)
-        c->render(shaderProgram, projection, view);
+        c->render(shader, projection, view);
 }

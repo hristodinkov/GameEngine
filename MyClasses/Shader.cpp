@@ -3,19 +3,18 @@
 //
 
 #include "Shader.h"
+#include <string>
+
 
 std::string get_file_contents(const char *filename) {
-    std::ifstream in(filename, std::ios::binary);
-    if (in) {
-        std::string contents;
-        in.seekg(0, std::ios::end);
-        contents.resize(in.tellg());
-        in.seekg(0, std::ios::beg);
-        in.read(&contents[0], contents.size());
-        in.close();
-        return contents;
+    std::ifstream fileStream(filename, std::ios::in);
+    if (!fileStream.is_open()) {
+        printf("Could not open file: %s\n", filename);
+        return "";
     }
-    throw(errno);
+    std::stringstream buffer;
+    buffer << fileStream.rdbuf();
+    return buffer.str();
 }
 
 Shader::Shader(const char *vertexFile, const char *fragmentFile) {
@@ -56,4 +55,24 @@ void Shader::Activate() {
 void Shader::Delete() {
     glDeleteProgram(ID);
 }
+
+GLint Shader::GetUniformLocation(const char* name) {
+    return glGetUniformLocation(ID,name);
+}
+
+void Shader::SetVec3Uniform(const char *name, const glm::vec3 &value) {
+    glUniform3fv(GetUniformLocation(name), 1, glm::value_ptr(value));
+}
+void Shader::SetMat4Uniform(const char *name, const glm::mat4 &value) {
+    glUniformMatrix4fv(GetUniformLocation(name), 1, GL_FALSE, glm::value_ptr(value));
+}
+
+void Shader::SetFloatUniform(const char *name, float value) {
+    glUniform1f(GetUniformLocation(name), value);
+}
+void Shader::SetIntUniform(const char *name, int value) {
+    glUniform1i(GetUniformLocation(name), value);
+}
+
+
 

@@ -35,7 +35,6 @@ set(IMGUI_SOURCES
         MyClasses/LightObj.h
         MyClasses/Translate.cpp
         MyClasses/Translate.h
-        MyClasses/ModelShaderUniform.h
         MyClasses/Shader.cpp
         MyClasses/Shader.h
         MyClasses/VBO.cpp
