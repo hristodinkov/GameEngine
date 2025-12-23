@@ -49,14 +49,14 @@ Shader::Shader(const char *vertexFile, const char *fragmentFile) {
 
 }
 
-void Shader::Activate() {
+void Shader::Activate() const{
     glUseProgram(ID);
 }
 void Shader::Delete() {
     glDeleteProgram(ID);
 }
 
-GLint Shader::GetUniformLocation(const char* name) {
+GLint Shader::GetUniformLocation(const char* name) const{
     return glGetUniformLocation(ID,name);
 }
 
@@ -70,8 +70,14 @@ void Shader::SetMat4Uniform(const char *name, const glm::mat4 &value) {
 void Shader::SetFloatUniform(const char *name, float value) {
     glUniform1f(GetUniformLocation(name), value);
 }
-void Shader::SetIntUniform(const char *name, int value) {
+void Shader::SetIntUniform(const char *name, int value) const{
     glUniform1i(GetUniformLocation(name), value);
+}
+
+void Shader::BindTexture(const std::string& uniformName,GLuint textureID,GLuint unit) const{
+    glActiveTexture(GL_TEXTURE0 + unit);
+    glBindTexture(GL_TEXTURE_2D, textureID);
+    SetIntUniform(uniformName.c_str(), unit);
 }
 
 

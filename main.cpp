@@ -233,10 +233,24 @@ int main() {
     //     glm::vec3(1, 0, 0), glm::radians(60.0f)
     // ));
     core::Texture cmgtGatoTexture("textures/CMGaTo_crop.png");
+    core::Texture stone("textures/stone.jpg");
+    core::Texture paint("textures/paint.png");
+    core::Texture chalk ("textures/chalk.jpg");
 
     glm::vec4 clearColor = glm::vec4(0.2f, 0.2f, 0.2f, 1.0f);
     glClearColor(clearColor.r,
                  clearColor.g, clearColor.b, clearColor.a);
+
+    unsigned int rectVAO,rectVBO;
+    glGenVertexArrays(1, &rectVAO);
+    glGenBuffers(1, &rectVBO);
+    glBindVertexArray(rectVAO);
+    glBindBuffer(GL_ARRAY_BUFFER, rectVBO);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(rectangleVertices), &rectangleVertices, GL_STATIC_DRAW);
+    glEnableVertexAttribArray(0);
+    glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 4*sizeof(float), (void*)0);
+    glEnableVertexAttribArray(1);
+    glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 4*sizeof(float), (void*)(2*sizeof(float)));
 
 
 
@@ -268,41 +282,32 @@ int main() {
 
     glm::vec3 carPos = car2->getPos();
 
-    // unsigned int FBO;
-    // glGenFramebuffers(1, &FBO);
-    // glBindFramebuffer(GL_FRAMEBUFFER, FBO);
-    //
-    // unsigned int framebufferTexture;
-    // glGenTextures(1, &framebufferTexture);
-    // glBindTexture(GL_TEXTURE_2D, framebufferTexture);
-    // glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, g_width, g_height, 0, GL_RGB, GL_UNSIGNED_BYTE, NULL);
-    // glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-    // glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-    // glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-    // glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-    // glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, framebufferTexture, 0);
-    //
-    // unsigned int renderBuffer;
-    // glGenRenderbuffers(1, &renderBuffer);
-    // glBindRenderbuffer(GL_RENDERBUFFER, renderBuffer);
-    // glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8, g_width, g_height);
-    // glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL, GL_RENDERBUFFER, renderBuffer);
-    //
-    // auto fboStatus = glCheckFramebufferStatus(GL_FRAMEBUFFER);
-    // if (fboStatus != GL_FRAMEBUFFER_COMPLETE)
-    //     printf("Framebuffer error: "+fboStatus);
-    //
-    //
-    // unsigned int rectVAO,rectVBO;
-    // glGenVertexArrays(1, &rectVAO);
-    // glGenBuffers(1, &rectVBO);
-    // glBindVertexArray(rectVAO);
-    // glBindBuffer(GL_ARRAY_BUFFER, rectVBO);
-    // glBufferData(GL_ARRAY_BUFFER, sizeof(rectangleVertices), &rectangleVertices, GL_STATIC_DRAW);
-    // glEnableVertexAttribArray(0);
-    // glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 4*sizeof(float), (void*)0);
-    // glEnableVertexAttribArray(1);
-    // glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 4*sizeof(float), (void*)(2*sizeof(float)));
+    unsigned int FBO;
+    glGenFramebuffers(1, &FBO);
+    glBindFramebuffer(GL_FRAMEBUFFER, FBO);
+
+    unsigned int framebufferTexture;
+    glGenTextures(1, &framebufferTexture);
+    glBindTexture(GL_TEXTURE_2D, framebufferTexture);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, g_width, g_height, 0, GL_RGB, GL_UNSIGNED_BYTE, NULL);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, framebufferTexture, 0);
+
+    unsigned int renderBuffer;
+    glGenRenderbuffers(1, &renderBuffer);
+    glBindRenderbuffer(GL_RENDERBUFFER, renderBuffer);
+    glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8, g_width, g_height);
+    glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL, GL_RENDERBUFFER, renderBuffer);
+
+    auto fboStatus = glCheckFramebufferStatus(GL_FRAMEBUFFER);
+    if (fboStatus != GL_FRAMEBUFFER_COMPLETE)
+        printf("Framebuffer error: %d\n", fboStatus);
+
+
+
 
     float aspect = static_cast<float>(g_width) / g_height;
     while (!glfwWindowShouldClose(window)) {
@@ -354,26 +359,27 @@ int main() {
             sceneManager.setActiveScene("Monkey");
         if (glfwGetKey(window, GLFW_KEY_2) == GLFW_PRESS)
             sceneManager.setActiveScene("Car");
+
         sceneManager.update(deltaTime);
 
-        //glBindFramebuffer(GL_FRAMEBUFFER, FBO);
+
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-        glEnable(GL_DEPTH_TEST);
+
 
         projection = glm::perspective(glm::radians(camera.fov),aspect,0.1f, 100.0f);
 
         view = glm::inverse(camera.getModelMatrix());
 
-        textureShader.Activate();
-
-        textureShader.SetMat4Uniform("mvpMatrix",projection * view * quadModel.getModelMatrix());
-
-        textureShader.SetIntUniform("texture0", 0);
-
-        glActiveTexture(GL_TEXTURE0);
-        glBindTexture(GL_TEXTURE_2D, cmgtGatoTexture.getId());
-
-        quadModel.render();
+        // textureShader.Activate();
+        //
+        // textureShader.SetMat4Uniform("mvpMatrix",projection * view * quadModel.getModelMatrix());
+        //
+        // textureShader.SetIntUniform("texture0", 0);
+        //
+        // glActiveTexture(GL_TEXTURE0);
+        // glBindTexture(GL_TEXTURE_2D, cmgtGatoTexture.getId());
+        //
+        // quadModel.render();
 
         modelShader.Activate();
 
@@ -389,25 +395,30 @@ int main() {
         modelShader.SetMat4Uniform("viewMatrix", view);
         modelShader.SetMat4Uniform("projMatrix", projection);
 
+        modelShader.BindTexture("textures/chalk.jpg",chalk.getId(),0);
+
         sceneManager.render(modelShader, projection, view);
 
-        invertColorsShader.Activate();
-        invertColorsShader.SetIntUniform("screenTexture", 0);
+
 
 
         glBindVertexArray(0);
 
+        // glBindFramebuffer(GL_FRAMEBUFFER, FBO);
+        // glEnable(GL_DEPTH_TEST);
 
-        ImGui::Render();
-        ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
+        // invertColorsShader.Activate();
+        // invertColorsShader.SetIntUniform("screenTexture", 0);
 
         glBindFramebuffer(GL_FRAMEBUFFER, 0);
-        invertColorsShader.Activate();
+        //invertColorsShader.Activate();
         //glBindVertexArray(rectVAO);
-        glDisable(GL_DEPTH_TEST);
+        //glDisable(GL_DEPTH_TEST);
         //glBindTexture(GL_TEXTURE_2D, framebufferTexture);
         //glDrawArrays(GL_TRIANGLES, 0, 6);
 
+        ImGui::Render();
+        ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
         glfwSwapBuffers(window);
         glfwPollEvents();
         finishFrameTime = glfwGetTime();

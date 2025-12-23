@@ -22,14 +22,16 @@ public:
     GLuint ID;
     Shader(const char*vertexFile, const char* fragmentFile);
 
-    void Activate();
+    void Activate() const;
     void Delete();
 
-    GLint GetUniformLocation(const char* name);
+    GLint GetUniformLocation(const char* name) const;
     void SetVec3Uniform(const char* name, const glm::vec3& value);
     void SetFloatUniform(const char* name,float value);
     void SetMat4Uniform(const char* name, const glm::mat4& mat);
-    void SetIntUniform(const char* name, int value);
+    void SetIntUniform(const char* name, int value) const;
+
+    void BindTexture(const std::string& uniformName,GLuint textureID,GLuint unit )const;
 
 };
 

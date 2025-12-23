@@ -27,7 +27,6 @@ void main()
     float distance = length(lightPos-worldPos);
     float d = 1 - distance / lightRadius;
 
-
     float attenuation = 1.0 / (1.0 + 0.5 * d + 0.25 * d * d);
     attenuation = clamp(d, 0.0, 1.0);
 

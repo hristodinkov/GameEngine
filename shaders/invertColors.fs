@@ -1,6 +1,7 @@
-﻿#version 400 core
+﻿#version 330 core
 
 out vec4 FragColor;
+
 in vec2 uv;
 
 uniform sampler2D screenTexture;
@@ -8,6 +9,7 @@ uniform sampler2D screenTexture;
 void main()
 {
 //     vec3 color = texture(screenTexture, uv).rgb;
-//     FragColor = vec4(vec3(1.0) - color, 1.0);
-FragColor = vec4(1,0,0,1);
+//     vec3 inverted = vec3(1.0) - color;
+//     FragColor = vec4(inverted, 1.0);
+FragColor = texture(screenTexture,uv).rgb;
 }
