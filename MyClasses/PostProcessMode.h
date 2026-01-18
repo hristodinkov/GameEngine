@@ -1,7 +1,9 @@
 ﻿enum class PostProcessMode {
     None,
     Invert,
-    Grayscale
+    Grayscale,
+    EdgeDetection,
+    Pixelization,
 };
 
 PostProcessMode currentMode = PostProcessMode::None;

@@ -45,8 +45,9 @@ void main()
     //vec3 lighting = ambient + ((diffuse+specular)*lightColor)/attenuation;
 
     //vec3 finalColor =  lighting; //+ambient;
-    if(distance>lightRadius){
-    lighting = ambient;
+    if(distance>lightRadius)
+    {
+        lighting = ambient;
     }
     FragColor = vec4(lighting, 1.0);
 }

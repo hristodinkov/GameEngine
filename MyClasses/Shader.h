@@ -23,7 +23,7 @@ public:
     Shader(const char*vertexFile, const char* fragmentFile);
 
     void Activate() const;
-    void Delete();
+    void Delete() const;
 
     GLint GetUniformLocation(const char* name) const;
     void SetVec3Uniform(const char* name, const glm::vec3& value);

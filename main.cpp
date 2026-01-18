@@ -3,6 +3,7 @@
 #include <glm/glm.hpp>
 #include <glm/gtc/type_ptr.hpp>
 #include <fstream>
+#include <memory>
 #include <sstream>
 #include <algorithm>
 #include <vcruntime_startup.h>
@@ -168,6 +169,10 @@ int main() {
 
     Shader greyShader("shaders/invertColors.vs","shaders/greyFramebuffer.fs");
 
+    Shader edgeDetectionShader("shaders/invertColors.vs","shaders/edgeDetection.fs");
+
+    Shader pixelizationShader("shaders/invertColors.vs","shaders/pixelatedFramebuffer.fs");
+
 
     core::Mesh quad = core::Mesh::generateQuad();
     core::Model quadModel({quad});
@@ -206,7 +211,8 @@ int main() {
     SceneManager sceneManager;
 
     auto scene1 = sceneManager.createScene("Monkey");
-    auto suzanne = scene1->addObject(GameObject("Suzanne"));
+    auto monkey = std::make_shared<GameObject>("Strange Monkey");
+    auto suzanne = scene1->addObject(monkey);
     suzanne->model = core::AssimpLoader::loadModel("models/nonormalmonkey.obj");
     suzanne->translate(glm::vec3(-2.0f, 0.0f, 0.0f));
     //suzanne->addBehavior(std::make_shared<Translate>(1.0f,glm::vec3(0.1f, 0.0f, 0.0f)));
@@ -218,12 +224,14 @@ int main() {
     //auto light = scene1->addObject(GameObject("Light"));
     auto light = std::make_shared<LightObj>(glm::vec3(0.0f, 10.0f, 0.0f), glm::vec4(184.0f/256.0f, 23.0f/256.0f, 222.0f/256.0f, 0.0f),10);
     mainLight = std::move(light);
-    auto pointlight = scene1->addObject(GameObject("PointLight"));
+    auto lightSharedptr = std::make_shared<GameObject>("Point Light");
+    auto pointlight = scene1->addObject(lightSharedptr);
     //pointlight->translate(light->getPos());
 
 
     auto scene2 = sceneManager.createScene("Car");
-    auto car = scene2->addObject(GameObject("Car"));
+    auto carSharedptr = std::make_shared<GameObject>("Car");
+    auto car = scene2->addObject(carSharedptr);
     car->model = core::AssimpLoader::loadModel("models/car.obj");
     car->translate(glm::vec3(2.0f, 0.0f, 0.0f));
     //car->scale(glm::vec3(0.01f, 0.01f, 0.01f));
@@ -231,7 +239,9 @@ int main() {
         glm::vec3(1, 0, 0), glm::radians(60.0f)
     ));
 
-    auto car2 = scene1->addObject(GameObject("Car2"));
+
+    auto carSharedptr2 = std::make_shared<GameObject>("Car");
+    auto car2 = scene1->addObject(carSharedptr2);
     car2->model = core::AssimpLoader::loadModel("models/car.obj");
     car2->translate(glm::vec3(0.0f, 0.0f, -50.0f));
     //car->scale(glm::vec3(0.01f, 0.01f, 0.01f));
@@ -288,6 +298,8 @@ int main() {
     float guiAmbient = 0.25f;
     float guiLightRadius = 35.0f;
 
+    float pixels = 512.0;
+
     glm::vec3 carPos = car2->getPos();
 
     // --- FRAMEBUFFER SETUP ---
@@ -324,14 +336,12 @@ int main() {
 
     glBindVertexArray(0);
 
-    // Create depth + stencil renderbuffer
+    //depth + stencil renderbuffer
     unsigned int rbo;
     glGenRenderbuffers(1, &rbo);
     glBindRenderbuffer(GL_RENDERBUFFER, rbo);
     glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8, g_width, g_height);
     glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, rbo);
-
-
 
     // Check completeness
     if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
@@ -346,7 +356,7 @@ int main() {
 
     while (!glfwWindowShouldClose(window))
     {
-        // --- IMGUI SETUP ---
+
         ImGui_ImplOpenGL3_NewFrame();
         ImGui_ImplGlfw_NewFrame();
         ImGui::NewFrame();
@@ -360,7 +370,10 @@ int main() {
             ImGui::SliderFloat("Ambient Strength", &guiAmbient, 0.0f, 1.0f);
             ImGui::SliderFloat("Light Radis", &guiLightRadius, 0.0f, 100.0f);
 
-            ImGui::Combo("Post Process", (int*)&currentPostProcessingMode, "None\0Grayscale\0Invert\0");
+            ImGui::Combo("Post Process", (int*)&currentPostProcessingMode, "None\0Grayscale\0Invert\0EdgeDetection\0Pixalization");
+            if (currentPostProcessingMode == 4) {
+                ImGui::DragFloat("Pixels",&pixels,1,1024);
+            }
         } ImGui::End();
 
         if (ImGui::Begin("MoveCar",&IMGuiOpenedCarWindow)) {
@@ -382,14 +395,12 @@ int main() {
         projection = glm::perspective(glm::radians(camera.fov), aspect, 0.1f, 100.0f);
         view = glm::inverse(camera.getModelMatrix());
 
-        // ==================================
-        //  RENDER SCENE INTO FRAMEBUFFER
-        // ==================================
+
         if (currentPostProcessingMode == 0) {
-            // NONE → render directly to screen
+            // NONE
             glBindFramebuffer(GL_FRAMEBUFFER, 0);
         } else {
-            // Any effect → render into framebuffer
+            // Any effect
             glBindFramebuffer(GL_FRAMEBUFFER, framebuffer);
         }
 
@@ -417,9 +428,6 @@ int main() {
 
         glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
-        // ============================================================
-        // === DRAW FULLSCREEN QUAD USING THE FRAMEBUFFER TEXTURE =====
-        // ============================================================
         if (currentPostProcessingMode != 0) {
             glDisable(GL_DEPTH_TEST);
             glDisable(GL_CULL_FACE);
@@ -430,17 +438,23 @@ int main() {
             Shader* activeShader = nullptr;
 
             if (currentPostProcessingMode == 1) {
-                // Grayscale
                 activeShader = &greyShader;
             }
             else if (currentPostProcessingMode == 2) {
-                // Invert
                 activeShader = &invertColorsShader;
+            }
+            else if (currentPostProcessingMode == 3) {
+                activeShader = &edgeDetectionShader;
+            }
+            else if (currentPostProcessingMode == 4) {
+                activeShader = &pixelizationShader;
+
             }
 
             if (activeShader != nullptr) {
                 activeShader->Activate();
                 activeShader->SetIntUniform("screenTexture", 0);
+                activeShader->SetFloatUniform("Pixels",pixels);
 
                 glActiveTexture(GL_TEXTURE0);
                 glBindTexture(GL_TEXTURE_2D, fbTexture);

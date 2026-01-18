@@ -12,6 +12,4 @@ void main()
 
     vec3 inverted = vec3(1.0) - color.rgb;
     FragColor = vec4(inverted, 1.0);
-
-
 }

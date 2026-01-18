@@ -15,13 +15,16 @@ std::string get_file_contents(const char *filename) {
     std::stringstream buffer;
     buffer << fileStream.rdbuf();
     std::string text = buffer.str();
-    
-    if (text.size() >= 3 &&
-        (unsigned char)text[0] == 0xEF &&
-        (unsigned char)text[1] == 0xBB &&
-        (unsigned char)text[2] == 0xBF) {
-        text.erase(0, 3);
-        }
+    //Explain this!!  Parse clearer
+    // if (text.size() >= 3 &&
+    //     (unsigned char)text[0] == 0xEF &&
+    //     (unsigned char)text[1] == 0xBB &&
+    //     (unsigned char)text[2] == 0xBF) {
+    //     text.erase(0, 3);
+    //     }
+
+    if (text.rfind("#version", 0) != 0)
+        printf("Warning: shader does not start with #version — possible BOM or whitespace in %s\n",filename);
 
     return text;
 }
@@ -47,12 +50,22 @@ Shader::Shader(const char *vertexFile, const char *fragmentFile) {
     glShaderSource(fragmentShader, 1, &fragmentSource, NULL);
     //compile fragment to machine code
     glCompileShader(fragmentShader);
+    glCompileShader(fragmentShader);
+    GLint success = 0;
+    glGetShaderiv(fragmentShader, GL_COMPILE_STATUS, &success);
+    if (!success) {
+        char infoLog[512];
+        glGetShaderInfoLog(fragmentShader, 512, NULL, infoLog);
+        printf("Error! Shader issue [%s]: %s\n", fragmentSource, infoLog);
+    }
 
     ID = glCreateProgram();
 
     glAttachShader(ID, vertexShader);
     glAttachShader(ID, fragmentShader);
     glLinkProgram(ID);
+
+
 
     glDeleteShader(vertexShader);
     glDeleteShader(fragmentShader);
@@ -62,7 +75,7 @@ Shader::Shader(const char *vertexFile, const char *fragmentFile) {
 void Shader::Activate() const{
     glUseProgram(ID);
 }
-void Shader::Delete() {
+void Shader::Delete() const{
     glDeleteProgram(ID);
 }
 

@@ -29,11 +29,11 @@ public:
 
     virtual ~GameObject() = default;
 
-    void addChild(std::shared_ptr<GameObject> child,...);
+    void addChild(std::shared_ptr<GameObject> child);
 
-    std::shared_ptr<GameObject> addChild(const GameObject& child,...);
+    //std::shared_ptr<GameObject> addChild(const GameObject& child,...);
 
-    void addBehavior(std::shared_ptr<Behavior> behavior,...);
+    void addBehavior(std::shared_ptr<Behavior> behavior);
 
     void update(float deltaTime);
 

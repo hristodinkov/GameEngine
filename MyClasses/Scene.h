@@ -14,8 +14,9 @@ class Scene {
 public:
     std::vector<std::shared_ptr<GameObject>> objects;
 
-    std::shared_ptr<GameObject> addObject(std::shared_ptr<GameObject> obj,...);
-    std::shared_ptr<GameObject> addObject(const GameObject& obj,...);
+    //Explain the ...
+    std::shared_ptr<GameObject> addObject(std::shared_ptr<GameObject> obj);
+    // std::shared_ptr<GameObject> addObject(const GameObject& obj,...);
     void update(float deltaTime);
 
     void render(Shader& shader,const glm::mat4& projection,const glm::mat4& view);
