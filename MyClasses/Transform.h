@@ -14,7 +14,6 @@ class Transform {
 public:
 
     glm::mat4 modelMatrix;
-    glm::vec3 rotationEuler; // store rotation in radians
     glm::vec3 position;
     glm::vec3 scaleFactors;
 public:
@@ -27,6 +26,8 @@ public:
     void setRotation(glm::vec3 eulerAngles);
     glm::vec3 getPos() const;
     void setPos(glm::vec3 pos);
+
+
 private:
     void updateModelMatrix();
 

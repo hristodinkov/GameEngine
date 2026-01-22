@@ -28,14 +28,14 @@ void main()
     float d = 1 - distance / lightRadius;
 
     float attenuation = 1.0 / (1.0 + 0.5 * d + 0.25 * d * d);
-    attenuation = clamp(d, 0.0, 1.0);
+    //attenuation = clamp(d, 0.0, 1.0);
 
-    float diffuse = max(dot(normal,lightDirection),0.0);//*vec3(1.0,1.0,1.0);
+    float diffuse = max(dot(normal,lightDirection),0.0);//*vec3(1.0,1.0,1.0); 1-light, 0 - no light
 
     vec3 ambient = ambientStrength * texColor;//*ambientLightColor
 
     vec3 viewDir = normalize(cameraPos - worldPos);
-    vec3 reflectDir = reflect(-lightDirection, normal);
+    vec3 reflectDir = reflect(-lightDirection, normal); //reflect needs the vector from light to the fragment
     //vec3 halfDir = normalize(lightDirection+viewDir)
     //float spec = pow(max(dot(normal, halfDir), 0.0), shininess);
     float spec = pow(max(dot(viewDir, reflectDir), 0.0), shininess);
@@ -45,9 +45,9 @@ void main()
     //vec3 lighting = ambient + ((diffuse+specular)*lightColor)/attenuation;
 
     //vec3 finalColor =  lighting; //+ambient;
-    if(distance>lightRadius)
-    {
-        lighting = ambient;
-    }
+//     if(distance>lightRadius)
+//     {
+//         lighting = ambient;
+//     }
     FragColor = vec4(lighting, 1.0);
 }

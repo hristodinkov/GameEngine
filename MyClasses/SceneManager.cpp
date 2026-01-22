@@ -20,9 +20,8 @@ void SceneManager::setActiveScene(const std::string& name) {
     if (sceneToActivate != scenesDictionary.end()) {
         currentScene = sceneToActivate->second;
         //std::cout << "Switched to scene: " << name << std::endl;
-    } else {
-        //std::cerr << "Scene not found: " << name << std::endl;
     }
+
 }
 
 std::shared_ptr<Scene> SceneManager::getActiveScene() const {

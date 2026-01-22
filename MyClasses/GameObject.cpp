@@ -14,13 +14,6 @@ void GameObject::addChild(std::shared_ptr<GameObject> child) {
     children.push_back(child);
 }
 
-// std::shared_ptr<GameObject> GameObject::addChild(const GameObject& child,...) {
-//     auto newChild = std::make_shared<GameObject>(child);
-//     newChild->parent = this;
-//     children.push_back(newChild);
-//     return newChild;
-// }
-
 void GameObject::addBehavior(std::shared_ptr<Behavior> behavior) {
     behaviors.push_back(behavior);
     behavior->owner = this;

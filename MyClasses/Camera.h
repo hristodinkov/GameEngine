@@ -14,18 +14,8 @@ using namespace std;
 
 class Camera : public Transform {
 
-public: // TODO: Don't keep track of redundant data!
-        // Also: don't make everything public :-)
-    glm::vec3 cameraPos;
-    glm::vec3 cameraTarget;
-    // These are also all in the matrix: :-) (See Shader programming)
-    glm::vec3 cameraDirection;
-    glm::vec3 cameraUp;
-    glm::vec3 cameraRight;
-    glm::vec3 cameraForward;
+public:
     float speed;
-
-
     bool rotating = false;
     double lastX = 0.0;
     double lastY = 0.0;
@@ -35,8 +25,13 @@ public: // TODO: Don't keep track of redundant data!
 
     float fov =45.0f;
     float fovSpeed =5;
-public:
-    glm::vec3 getCameraPos() const;
+
+    glm::vec3 getPos() const;
+
+    glm::vec3 getForward() const;
+    glm::vec3 getUp() const;
+    glm::vec3 getRight() const;
+
     void Move(GLFWwindow *window);
     void Rotate(GLFWwindow *window);
 

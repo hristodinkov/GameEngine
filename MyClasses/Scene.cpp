@@ -9,12 +9,6 @@ std::shared_ptr<GameObject> Scene::addObject(std::shared_ptr<GameObject> obj) {
     return obj;
 }
 
-// std::shared_ptr<GameObject>Scene::addObject(const GameObject& obj,...) {
-//     auto newObject = std::make_shared<GameObject>(obj);
-//     objects.push_back(newObject);
-//     return newObject;
-// }
-
 void Scene::update(float deltaTime) {
     for (auto& obj : objects)
         obj->update(deltaTime);

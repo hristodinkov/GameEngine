@@ -2,6 +2,7 @@
 in vec2 TexCoords;
 uniform sampler2D screenTexture;
 out vec4 frag_colour;
+uniform float kernelCenterValue;
 
 
 void main()
@@ -15,7 +16,7 @@ void main()
 
     float kernel[9] = float[ ](
     1.0, 1.0, 1.0,
-    1.0, -8.0, 1.0,
+    1.0, kernelCenterValue, 1.0,
     1.0, 1.0, 1.0
     );
 

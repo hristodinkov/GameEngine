@@ -51,8 +51,10 @@ bool IMGuiOpenedCarWindow = true;
 bool checkboxTest = false;
 float value1 = 0.1f;
 int value2 =1;
-const char* items[] = {"item1", "item2", "item3"};
 int current = 0;
+//VP
+glm::mat4 view ;
+glm::mat4 projection;
 void myStyle() {
     style.SetupImGuiStyle();
 }
@@ -95,18 +97,10 @@ void framebufferSizeCallback(GLFWwindow *window,
 //     return shader;
 // }
 
-void PrintMatrix(glm::mat4 matrix) {
-    for (int r=0;r<4;r++) {
-        for (int c=0;c<4;c++) {
-            printf("%f ",matrix[c][r]);
-        }
-        printf("\n");
-    }
-
-}
 
 float rectangleVertices[]{
-    //Coords    //texCoords
+    //Coords |   texCoords
+    //x , y     , u    , v
     1.0f, -1.0f, 1.0f, 0.0f,
    -1.0f, -1.0f, 0.0f, 0.0f,
    -1.0f,  1.0f, 0.0f, 1.0f,
@@ -216,9 +210,9 @@ int main() {
     suzanne->model = core::AssimpLoader::loadModel("models/nonormalmonkey.obj");
     suzanne->translate(glm::vec3(-2.0f, 0.0f, 0.0f));
     //suzanne->addBehavior(std::make_shared<Translate>(1.0f,glm::vec3(0.1f, 0.0f, 0.0f)));
-    // suzanne->addBehavior(std::make_shared<Rotate>(
-    //     glm::vec3(0, 1, 0), glm::radians(30.0f)
-    // ));
+     suzanne->addBehavior(std::make_shared<Rotate>(
+         glm::vec3(0, 1, 0), glm::radians(30.0f)
+     ));
 
     std::shared_ptr<LightObj> mainLight = nullptr;
     //auto light = scene1->addObject(GameObject("Light"));
@@ -259,32 +253,12 @@ int main() {
     glClearColor(clearColor.r,
                  clearColor.g, clearColor.b, clearColor.a);
 
-    unsigned int rectVAO,rectVBO;
-    glGenVertexArrays(1, &rectVAO);
-    glGenBuffers(1, &rectVBO);
-    glBindVertexArray(rectVAO);
-    glBindBuffer(GL_ARRAY_BUFFER, rectVBO);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(rectangleVertices), &rectangleVertices, GL_STATIC_DRAW);
-    glEnableVertexAttribArray(0);
-    glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 4*sizeof(float), (void*)0);
-    glEnableVertexAttribArray(1);
-    glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 4*sizeof(float), (void*)(2*sizeof(float)));
 
 
 
-    auto cameraPos = glm::vec3(0.0f, 0.0f, 10.0f);
-    camera.cameraTarget = glm::vec3(0.0f, 0.0f, 0.0f);
-    camera.cameraDirection = glm::normalize(camera.cameraPos - camera.cameraTarget);
-
-    camera.cameraRight = glm::normalize(glm::cross(glm::vec3(0,1,0), camera.cameraDirection));
-    camera.cameraUp = glm::cross(camera.cameraDirection, camera.cameraRight);
-    //VP
-    glm::mat4 view = glm::lookAt(camera.cameraPos, camera.cameraTarget, camera.cameraUp);
-    glm::mat4 projection = glm::perspective(glm::radians(45.0f), static_cast<float>(g_width) / static_cast<float>(g_height), 0.1f, 100.0f);
-
-    camera.translate(cameraPos);
+    camera.translate(glm::vec3(0.0f, 0.0f, 10.0f));
     //camera.rotate(glm::vec3(1,0,0), -10.0f * 3.1415f / 180);
-    camera.speed = 0.005f;
+    camera.speed = 0.007f;
 
     double currentTime = glfwGetTime();
     double finishFrameTime = 0.0;
@@ -300,7 +274,8 @@ int main() {
 
     float pixels = 512.0;
 
-    glm::vec3 carPos = car2->getPos();
+    float kernelCenterValueMatrix= -8;
+
 
     // --- FRAMEBUFFER SETUP ---
     unsigned int framebuffer;
@@ -317,6 +292,7 @@ int main() {
     glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, fbTexture, 0);
 
 
+
     unsigned int quadVAO, quadVBO;
     glGenVertexArrays(1, &quadVAO);
     glGenBuffers(1, &quadVBO);
@@ -326,13 +302,13 @@ int main() {
     glBindBuffer(GL_ARRAY_BUFFER, quadVBO);
     glBufferData(GL_ARRAY_BUFFER, sizeof(rectangleVertices), rectangleVertices, GL_STATIC_DRAW);
 
-    // position attribute (vec2)
+    // position attribute (vec2) ndc
     glEnableVertexAttribArray(0);
-    glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(float), (void*)0);
+    glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(float), (void *) 0);
 
     // texcoord attribute (vec2)
     glEnableVertexAttribArray(1);
-    glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(float), (void*)(2 * sizeof(float)));
+    glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(float), (void *) (2 * sizeof(float)));
 
     glBindVertexArray(0);
 
@@ -347,6 +323,7 @@ int main() {
     if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
         printf("ERROR: Framebuffer is not complete!\n");
 
+    //unbind
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
 
@@ -356,7 +333,6 @@ int main() {
 
     while (!glfwWindowShouldClose(window))
     {
-
         ImGui_ImplOpenGL3_NewFrame();
         ImGui_ImplGlfw_NewFrame();
         ImGui::NewFrame();
@@ -370,9 +346,12 @@ int main() {
             ImGui::SliderFloat("Ambient Strength", &guiAmbient, 0.0f, 1.0f);
             ImGui::SliderFloat("Light Radis", &guiLightRadius, 0.0f, 100.0f);
 
-            ImGui::Combo("Post Process", (int*)&currentPostProcessingMode, "None\0Grayscale\0Invert\0EdgeDetection\0Pixalization");
+            ImGui::Combo("Post Process", &currentPostProcessingMode, "None\0Grayscale\0Invert\0EdgeDetection\0Pixalization");
+            if (currentPostProcessingMode==3) {
+                ImGui::SliderFloat("Kernel Central Value",&kernelCenterValueMatrix,0,-20);
+            }
             if (currentPostProcessingMode == 4) {
-                ImGui::DragFloat("Pixels",&pixels,1,1024);
+                ImGui::SliderFloat("Pixels",&pixels,1,1024);
             }
         } ImGui::End();
 
@@ -393,8 +372,8 @@ int main() {
         sceneManager.update(deltaTime);
 
         projection = glm::perspective(glm::radians(camera.fov), aspect, 0.1f, 100.0f);
-        view = glm::inverse(camera.getModelMatrix());
-
+        //pos, target,up
+        view = glm::lookAt(camera.getPos(),camera.getPos()+camera.getForward(),camera.getUp());
 
         if (currentPostProcessingMode == 0) {
             // NONE
@@ -407,7 +386,7 @@ int main() {
         glViewport(0, 0, g_width, g_height);
         glEnable(GL_DEPTH_TEST);
         glDepthMask(GL_TRUE);
-        glDepthFunc(GL_LESS);
+        glDepthFunc(GL_LESS);//the closer the object, the more fragments it draws
 
         glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -430,7 +409,7 @@ int main() {
 
         if (currentPostProcessingMode != 0) {
             glDisable(GL_DEPTH_TEST);
-            glDisable(GL_CULL_FACE);
+            glDisable(GL_CULL_FACE); //triangles that does not face the camera
 
             glViewport(0, 0, g_width, g_height);
             glClear(GL_COLOR_BUFFER_BIT);
@@ -455,6 +434,7 @@ int main() {
                 activeShader->Activate();
                 activeShader->SetIntUniform("screenTexture", 0);
                 activeShader->SetFloatUniform("Pixels",pixels);
+                activeShader->SetFloatUniform("kernelCenterValue",kernelCenterValueMatrix);
 
                 glActiveTexture(GL_TEXTURE0);
                 glBindTexture(GL_TEXTURE_2D, fbTexture);

@@ -24,13 +24,11 @@ void Transform::scale(glm::vec3 scale) {
 }
 
 glm::mat4 Transform::getModelMatrix() const {
-
     return this->modelMatrix;
 }
 
 glm::vec3 Transform::getPos() const {
-    return modelMatrix * glm::vec4(position.x,position.y,position.z,1); // TODO: Look at shader programming :-)
-    return this->position; // TODO: DOn't keep track of redundant data
+    return glm::vec3(modelMatrix[3]);
 }
 
 void Transform::setPos(glm::vec3 pos) {
