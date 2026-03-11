@@ -7,26 +7,7 @@
 
 #include <glm/ext/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
-
-
-glm::vec3 Camera::getPos() const {
-    return glm::vec3(modelMatrix[3]);
-}
-
-glm::vec3 Camera::getForward() const {
-    return glm::normalize(glm::vec3(modelMatrix * glm::vec4(0,0,-1,0)));
-}
-
-glm::vec3 Camera::getRight() const {
-    return glm::normalize(glm::vec3(modelMatrix * glm::vec4(1,0,0,0)));
-}
-
-glm::vec3 Camera::getUp() const {
-    return glm::normalize(glm::vec3(modelMatrix * glm::vec4(0,1,0,0)));
-}
-
 void Camera::Move(GLFWwindow *window) {
-
 
     if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS) {
         this->translate(glm::vec3(0,0,-speed));
@@ -95,12 +76,26 @@ void Camera::Rotate(GLFWwindow *window) {
 
         rotationMatrix = glm::rotate(rotationMatrix, glm::radians(xRotation), glm::vec3(1.0f, 0.0f, 0.0f));
 
-        glm::mat4 translation = glm::translate(glm::mat4(1.0f), currentPosition);
-        modelMatrix = translation * rotationMatrix;
+        glm::mat4 translationMatrix = glm::translate(glm::mat4(1.0f), currentPosition);
+        modelMatrix = translationMatrix * rotationMatrix;
 
     }
     else {
         rotating = false;
     }
+}
+glm::vec3 Camera::getPos() const {
+    return glm::vec3(modelMatrix[3]);
+}
 
+glm::vec3 Camera::getForward() const {
+    return glm::normalize(glm::vec3(modelMatrix * glm::vec4(0,0,-1,0)));
+}
+
+glm::vec3 Camera::getRight() const {
+    return glm::normalize(glm::vec3(modelMatrix * glm::vec4(1,0,0,0)));
+}
+
+glm::vec3 Camera::getUp() const {
+    return glm::normalize(glm::vec3(modelMatrix * glm::vec4(0,1,0,0)));
 }

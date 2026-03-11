@@ -168,10 +168,10 @@ int main() {
     Shader pixelizationShader("shaders/invertColors.vs","shaders/pixelatedFramebuffer.fs");
 
 
-    core::Mesh quad = core::Mesh::generateQuad();
-    core::Model quadModel({quad});
-    quadModel.translate(glm::vec3(0,0,-2.5));
-    quadModel.scale(glm::vec3(5, 5, 1));
+    // core::Mesh quad = core::Mesh::generateQuad();
+    // core::Model quadModel({quad});
+    // quadModel.translate(glm::vec3(0,0,-2.5));
+    // quadModel.scale(glm::vec3(5, 5, 1));
 
     // Scene scene;
     // //core::Model suzanne = core::AssimpLoader::loadModel("models/nonormalmonkey.obj");
@@ -211,7 +211,7 @@ int main() {
     suzanne->translate(glm::vec3(-2.0f, 0.0f, 0.0f));
     //suzanne->addBehavior(std::make_shared<Translate>(1.0f,glm::vec3(0.1f, 0.0f, 0.0f)));
      suzanne->addBehavior(std::make_shared<Rotate>(
-         glm::vec3(0, 1, 0), glm::radians(30.0f)
+         glm::vec3(0, 1, 0), 1
      ));
 
     std::shared_ptr<LightObj> mainLight = nullptr;
@@ -230,8 +230,14 @@ int main() {
     car->translate(glm::vec3(2.0f, 0.0f, 0.0f));
     //car->scale(glm::vec3(0.01f, 0.01f, 0.01f));
     car->addBehavior(std::make_shared<Rotate>(
-        glm::vec3(1, 0, 0), glm::radians(60.0f)
+        glm::vec3(1, 0, 0), 1
     ));
+
+    auto quadSharedPtr = std::make_shared<GameObject>("Quad");
+    auto quad2 = scene2->addObject(quadSharedPtr);
+    quad2->model = core::AssimpLoader::loadModel("models/plane.obj");
+    quad2->rotate(glm::vec3(1,0,0),glm::radians(90.0f));
+    quad2->translate(glm::vec3(-2.5f, 0.0f, 0.0f));
 
 
     auto carSharedptr2 = std::make_shared<GameObject>("Car");
@@ -265,8 +271,21 @@ int main() {
     float deltaTime = 0.0f;
     float rotationStrength = 100.0f;
 
-    glm::vec3 guiLightPos = mainLight ? mainLight->getPos() : glm::vec3(0.0f, 3.0f, 0.0f);
-    glm::vec3 guiLightColor = mainLight ? glm::vec3(mainLight->getColor()) : glm::vec3(1.0f);
+    glm::vec3 guiLightPos;
+    if (mainLight) {
+        guiLightPos = mainLight->getPos();
+    } else {
+        guiLightPos = glm::vec3(0.0f, 3.0f, 0.0f);
+    }
+
+    glm::vec3 guiLightColor;
+
+    if (mainLight) {
+        guiLightColor = mainLight->getColor();
+    } else {
+        guiLightColor = glm::vec3(1.0f, 1.0f, 1.0f);
+    }
+
     float guiShininess = 75.0f;
     float guiSpecular = 42.0;
     float guiAmbient = 0.25f;
@@ -373,7 +392,7 @@ int main() {
 
         projection = glm::perspective(glm::radians(camera.fov), aspect, 0.1f, 100.0f);
         //pos, target,up
-        view = glm::lookAt(camera.getPos(),camera.getPos()+camera.getForward(),camera.getUp());
+        view = glm::lookAt(camera.getPos(),camera.getPos() + camera.getForward(),camera.getUp());
 
         if (currentPostProcessingMode == 0) {
             // NONE
