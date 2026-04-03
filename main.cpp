@@ -1,3 +1,4 @@
+#pragma once
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
 #include <glm/glm.hpp>
@@ -16,13 +17,10 @@
 #include "MyClasses/Rotate.h"
 #include "MyClasses/Scene.h"
 #include "MyClasses/SceneManager.h"
-#include "MyClasses/Shader.h"
 #include "MyClasses/Style.h"
-#include "MyClasses/Translate.h"
-#include "MyClasses/PostProcessMode.h"
 
 
-#pragma once
+
 //#define MAC_CLION
 #define VSTUDIO
 
@@ -35,6 +33,7 @@
 #ifdef VSTUDIO
 // Note: install imgui with:
 //     ./vcpkg.exe install imgui[glfw-binding,opengl3-binding]
+
 #include <imgui.h>
 #include <imgui_impl_glfw.h>
 #include <imgui_impl_opengl3.h>
@@ -111,19 +110,54 @@ float rectangleVertices[]{
 
 };
 
-std::vector<glm::vec3> cubeVertices = {
-    {-1,-1,-1}, {1,-1,-1}, {1,1,-1}, {-1,1,-1}, // back
-    {-1,-1, 1}, {1,-1, 1}, {1,1, 1}, {-1,1, 1}  // front
+std::vector<Vertex> cubeVertices = {
+    // FRONT (-Z)
+    {{-1,-1,-1}, {0,0,-1}, {0,0}},
+    {{ 1,-1,-1}, {0,0,-1}, {1,0}},
+    {{ 1, 1,-1}, {0,0,-1}, {1,1}},
+    {{-1, 1,-1}, {0,0,-1}, {0,1}},
+
+    // RIGHT (+X)
+    {{ 1,-1,-1}, {1,0,0}, {0,0}},
+    {{ 1,-1, 1}, {1,0,0}, {1,0}},
+    {{ 1, 1, 1}, {1,0,0}, {1,1}},
+    {{ 1, 1,-1}, {1,0,0}, {0,1}},
+
+    // BACK (+Z)
+    {{ 1,-1, 1}, {0,0,1}, {0,0}},
+    {{-1,-1, 1}, {0,0,1}, {1,0}},
+    {{-1, 1, 1}, {0,0,1}, {1,1}},
+    {{ 1, 1, 1}, {0,0,1}, {0,1}},
+
+    // LEFT (-X)
+    {{-1,-1, 1}, {-1,0,0}, {0,0}},
+    {{-1,-1,-1}, {-1,0,0}, {1,0}},
+    {{-1, 1,-1}, {-1,0,0}, {1,1}},
+    {{-1, 1, 1}, {-1,0,0}, {0,1}},
+
+    // TOP (+Y)
+    {{-1, 1,-1}, {0,1,0}, {0,0}},
+    {{ 1, 1,-1}, {0,1,0}, {1,0}},
+    {{ 1, 1, 1}, {0,1,0}, {1,1}},
+    {{-1, 1, 1}, {0,1,0}, {0,1}},
+
+    // BOTTOM (-Y)
+    {{-1,-1, 1}, {0,-1,0}, {0,0}},
+    {{ 1,-1, 1}, {0,-1,0}, {1,0}},
+    {{ 1,-1,-1}, {0,-1,0}, {1,1}},
+    {{-1,-1,-1}, {0,-1,0}, {0,1}},
 };
 
-std::vector<unsigned int> cubeIndices = {
-    0,1,2, 2,3,0,   // back
-    4,5,6, 6,7,4,   // front
-    0,4,7, 7,3,0,   // left
-    1,5,6, 6,2,1,   // right
-    3,2,6, 6,7,3,   // top
-    0,1,5, 5,4,0    // bottom
+
+std::vector<GLuint> cubeIndices = {
+    0,1,2, 2,3,0,       // front
+    4,5,6, 6,7,4,       // right
+    8,9,10, 10,11,8,    // back
+    12,13,14, 14,15,12, // left
+    16,17,18, 18,19,16, // top
+    20,21,22, 22,23,20  // bottom
 };
+
 
 
 int main() {
@@ -185,6 +219,8 @@ int main() {
 
     Shader pixelizationShader("shaders/invertColors.vs","shaders/pixelatedFramebuffer.fs");
 
+    Shader lineShader("shaders/line.vs","shaders/line.fs");
+
     SceneManager sceneManager;
 
     // auto scene1 = sceneManager.createScene("Cube");
@@ -198,13 +234,22 @@ int main() {
      // ));
 
     auto scene1 = sceneManager.createScene("Cube");
-    auto cube = scene1->addObject(std::make_shared<GameObject>("Cube"));
-    cube->model = core::AssimpLoader::loadModel("models/cube.obj");
-    cube->translate(glm::vec3(0, 0, 0));
+    // auto cube = scene1->addObject(std::make_shared<GameObject>("Cube"));
+    // cube->model = core::AssimpLoader::loadModel("models/cube.obj");
+    // cube->translate(glm::vec3(0, 0, 0));
 
 
-    cube->collider = std::make_shared<ConvexCollider>(cube->model->getAllVertices(),cube->model->getAllIndices(),cube->getModelMatrix());
-    cube->collider->update(cube->getModelMatrix());
+    // cube->collider = std::make_shared<ConvexCollider>(cube->model->getAllVertices(),cube->model->getAllIndices(),cube->getModelMatrix());
+    // cube->collider->update(cube->getModelMatrix());
+
+    core::Mesh cubeMesh (cubeVertices, cubeIndices);
+    core::Model cubeModel({cubeMesh});
+    auto cubeGO = std::make_shared<GameObject>("Cube");
+    cubeGO->model = cubeModel;
+
+    cubeGO->collider = std::make_shared<ConvexCollider>(cubeGO->model->getAllVertices(),cubeGO->model->getAllIndices(),cubeGO->getWorldTransform());
+
+
 
 
     //std::shared_ptr<LightObj> mainLight = nullptr;
@@ -339,6 +384,19 @@ int main() {
     //unbind
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
+    GLuint debugVAO, debugVBO;
+    glGenVertexArrays(1, &debugVAO);
+    glGenBuffers(1, &debugVBO);
+
+    glBindVertexArray(debugVAO);
+    glBindBuffer(GL_ARRAY_BUFFER, debugVBO);
+
+    glEnableVertexAttribArray(0);
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(glm::vec3), (void*)0);
+
+    glBindVertexArray(0);
+
+
 
     float aspect = static_cast<float>(g_width) / g_height;
 
@@ -424,20 +482,25 @@ int main() {
         sceneManager.render(modelShader, projection, view);
 
 
-        glDisable(GL_DEPTH_TEST);
+
         glLineWidth(1.5f);
 
-        auto activeScene = sceneManager.getActiveScene();
-        for (size_t i = 0; i < activeScene->objects.size(); i++) {
-            std::shared_ptr<GameObject> obj = activeScene->objects[i];
+        auto verts = cubeGO->collider->getLineVertices();
 
-            if (obj->collider) {
-                obj->collider->update(obj->getModelMatrix());
-                obj->collider->drawEdges();
-            }
-        }
+        lineShader.Activate();
+        lineShader.SetMat4Uniform("viewMatrix", view);
+        lineShader.SetMat4Uniform("projMatrix", projection);
+        lineShader.SetVec3Uniform("color", glm::vec3(0,1,0));
 
-        glEnable(GL_DEPTH_TEST);
+        glBindVertexArray(debugVAO);
+        glBindBuffer(GL_ARRAY_BUFFER, debugVBO);
+        glBufferData(GL_ARRAY_BUFFER, verts.size() * sizeof(glm::vec3), verts.data(), GL_DYNAMIC_DRAW);
+
+        glDrawArrays(GL_LINES, 0, verts.size());
+        glBindVertexArray(0);
+
+
+
 
         glBindFramebuffer(GL_FRAMEBUFFER, 0);
 

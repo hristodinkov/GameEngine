@@ -10,7 +10,10 @@
 #include <glm/vec2.hpp>
 #include <glm/vec3.hpp>
 #include <set>
+#include "../MyClasses/Shader.h"
 
+
+class Shader;
 
 class ConvexCollider {
 public:
@@ -19,6 +22,10 @@ public:
     std::vector<glm::vec3> worldVertices;
     std::vector<glm::vec3> faceNormals;
     std::vector<glm::vec3> edges;
+
+    GLuint lineVAO = 0;
+    GLuint lineVBO = 0;
+
 
     glm::vec3 aabbMin ;
     glm::vec3 aabbMax;
@@ -35,7 +42,10 @@ public:
 
     void addEdge(unsigned int a, unsigned int b,std::set<std::pair<unsigned int, unsigned int>>& uniqueEdges);
 
-    void drawEdges() const;
+    void drawEdges(Shader& shader,const glm::mat4& view, const glm::mat4& proj) const;
+
+    std::vector<glm::vec3> getLineVertices() const;
+
 
 };
 

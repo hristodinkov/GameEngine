@@ -7,12 +7,27 @@
 
 #include <iostream>
 #include <glm/glm.hpp>
-#include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
 #include <set>
 #include <glad/glad.h>
 
+
+
 ConvexCollider::ConvexCollider(const std::vector<glm::vec3> &vertices, const std::vector<unsigned int>& indices, const glm::mat4 modelMatrix) {
+
+    glGenVertexArrays(1, &lineVAO);
+    glGenBuffers(1, &lineVBO);
+
+    glBindVertexArray(lineVAO);
+    glBindBuffer(GL_ARRAY_BUFFER, lineVBO);
+
+    // each vertex = vec3 position
+    glEnableVertexAttribArray(0);
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(glm::vec3), (void*)0);
+
+    glBindVertexArray(0);
+
+
     localVertices = vertices;
     modelIndices = indices;
     for (auto element: vertices) {
@@ -57,6 +72,18 @@ std::vector<glm::vec3> ConvexCollider::getFaceNormals() const {
 std::vector<glm::vec3> ConvexCollider::getEdges() const {
     return edges;
 }
+std::vector<glm::vec3> ConvexCollider::getLineVertices() const {
+    std::vector<glm::vec3> verts;
+    verts.reserve(edgeIndexPairs.size() * 2);
+
+    for (auto& e : edgeIndexPairs) {
+        verts.push_back(worldVertices[e.first]);
+        verts.push_back(worldVertices[e.second]);
+    }
+
+    return verts;
+}
+
 
 void ConvexCollider::project(const glm::vec3& axis, float& outMin, float& outMax) const
 {
@@ -78,22 +105,30 @@ void ConvexCollider::addEdge(unsigned int a, unsigned int b, std::set<std::pair<
     uniqueEdges.insert({a, b});
 }
 
-void ConvexCollider::drawEdges() const {
+void ConvexCollider::drawEdges(Shader& shader,const glm::mat4& view, const glm::mat4& proj) const {
 
-    glColor3f(0.0f, 1.0f, 0.0f);
-    glBegin(GL_LINES);
-    for (size_t i = 0; i < edgeIndexPairs.size(); i++) {
+    std::vector<glm::vec3> lineVerts;
+    lineVerts.reserve(edgeIndexPairs.size() * 2);
 
-        unsigned int indexA = edgeIndexPairs[i].first;
-        unsigned int indexB = edgeIndexPairs[i].second;
-
-        const glm::vec3& a = worldVertices[indexA];
-        const glm::vec3& b = worldVertices[indexB];
-
-
-        glVertex3f(a.x, a.y, a.z);
-        glVertex3f(b.x, b.y, b.z);
-
+    for (auto& e : edgeIndexPairs)
+    {
+        lineVerts.push_back(worldVertices[e.first]);
+        lineVerts.push_back(worldVertices[e.second]);
     }
-    glEnd();
+
+    shader.Activate();
+    shader.SetMat4Uniform("viewMatrix", view);
+    shader.SetMat4Uniform("projMatrix", proj);
+    shader.SetVec3Uniform("color", glm::vec3(0,1,0));
+
+    glBindVertexArray(lineVAO);
+    glBindBuffer(GL_ARRAY_BUFFER, lineVBO);
+    glBufferData(GL_ARRAY_BUFFER,
+                 lineVerts.size() * sizeof(glm::vec3),
+                 lineVerts.data(),
+                 GL_DYNAMIC_DRAW);
+
+    glDrawArrays(GL_LINES, 0, lineVerts.size());
+    glBindVertexArray(0);
+
 }

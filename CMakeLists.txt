@@ -40,8 +40,6 @@ set(IMGUI_SOURCES
         MyClasses/PostProcessMode.h
         MyClasses/CollisionSystem/ConvexCollider.cpp
         MyClasses/CollisionSystem/ConvexCollider.h
-        MyClasses/CollisionSystem/Collision.cpp
-        MyClasses/CollisionSystem/Collision.h
 )
 
 add_executable(RawEngine main.cpp

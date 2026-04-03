@@ -12,7 +12,7 @@
 
 #include "Transform.h"
 #include "Behavior.h"
-#include "Shader.h"
+
 #include "Translate.h"
 #include "../core/model.h"
 #include "CollisionSystem/ConvexCollider.h"

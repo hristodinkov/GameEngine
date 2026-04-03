@@ -24,10 +24,12 @@ void GameObject::update(float deltaTime) {
     for (auto& b : behaviors)
         b->update(deltaTime);
 
-
-
     for (auto& c : children)
         c->update(deltaTime);
+
+    if (collider)
+        collider->update(getWorldTransform());
+
 }
 glm::mat4 GameObject::getWorldTransform() const {
     if (parent)
