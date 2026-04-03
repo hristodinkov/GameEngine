@@ -14,6 +14,8 @@ namespace core {
         Model(std::vector<core::Mesh> meshes) : Transform(), meshes(meshes) {}
 
         void render();
+        std::vector<glm::vec3> getAllVertices() const;
+        std::vector<unsigned int> getAllIndices() const;
 
 
     };

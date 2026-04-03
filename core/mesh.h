@@ -16,6 +16,9 @@ namespace core {
         Mesh(std::vector<Vertex> vertices, std::vector<GLuint> indices);
         void render();
         static Mesh generateQuad();
+        const std::vector<Vertex>& getVertices() const { return vertices; }
+        const std::vector<GLuint>& getIndices() const { return indices; }
+
     private:
         void setupBuffers();
     };

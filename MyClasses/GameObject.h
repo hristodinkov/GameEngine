@@ -15,6 +15,7 @@
 #include "Shader.h"
 #include "Translate.h"
 #include "../core/model.h"
+#include "CollisionSystem/ConvexCollider.h"
 
 
 class GameObject:public Transform {
@@ -24,6 +25,7 @@ public:
     GameObject* parent = nullptr;
     std::vector<std::shared_ptr<GameObject>> children;
     std::vector<std::shared_ptr<Behavior>> behaviors;
+    std::shared_ptr<ConvexCollider> collider;
 
     GameObject(std::string name = "GameObject");
 

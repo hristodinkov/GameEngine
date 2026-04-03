@@ -111,6 +111,21 @@ float rectangleVertices[]{
 
 };
 
+std::vector<glm::vec3> cubeVertices = {
+    {-1,-1,-1}, {1,-1,-1}, {1,1,-1}, {-1,1,-1}, // back
+    {-1,-1, 1}, {1,-1, 1}, {1,1, 1}, {-1,1, 1}  // front
+};
+
+std::vector<unsigned int> cubeIndices = {
+    0,1,2, 2,3,0,   // back
+    4,5,6, 6,7,4,   // front
+    0,4,7, 7,3,0,   // left
+    1,5,6, 6,2,1,   // right
+    3,2,6, 6,7,3,   // top
+    0,1,5, 5,4,0    // bottom
+};
+
+
 int main() {
     glfwInit();
     glfwWindowHint(GLFW_SAMPLES, 4);
@@ -157,6 +172,9 @@ int main() {
     char infoLog[512];
 
     Shader modelShader("shaders/modelVertex.vs","shaders/fragment.fs");
+
+    Shader grayShader("shaders/gray.vs","shaders/gray.fs");
+
     Shader textureShader("shaders/modelVertex.vs","shaders/texture.fs");
 
     Shader invertColorsShader("shaders/invertColors.vs","shaders/invertColors.fs");
@@ -167,60 +185,36 @@ int main() {
 
     Shader pixelizationShader("shaders/invertColors.vs","shaders/pixelatedFramebuffer.fs");
 
-
-    // core::Mesh quad = core::Mesh::generateQuad();
-    // core::Model quadModel({quad});
-    // quadModel.translate(glm::vec3(0,0,-2.5));
-    // quadModel.scale(glm::vec3(5, 5, 1));
-
-    // Scene scene;
-    // //core::Model suzanne = core::AssimpLoader::loadModel("models/nonormalmonkey.obj");
-    // auto suzanne = std::make_shared<GameObject>("Suzanne");
-    // suzanne->model = core::AssimpLoader::loadModel("models/nonormalmonkey.obj");
-    // suzanne->translate(glm::vec3(-2.0f, 0.0f, 0.0f));
-    // scene.addObject(suzanne);
-    //
-    // suzanne->addBehavior(std::make_shared<Rotate>(glm::vec3(1, 0, 0), glm::radians(60.0f)));
-    //
-    // auto car = scene.addObject(GameObject("car"));
-    // car->model = core::AssimpLoader::loadModel("models/car.fbx");
-    // car->translate(glm::vec3(2.0f, 0.0f, 0.0f));
-    // car->scale(glm::vec3(0.01f, 0.01f, 0.01f));
-    // // auto mirror = scene.addObject(GameObject("mirror"));
-    // // mirror->model = core::AssimpLoader::loadModel("models/mirror.fbx");
-    //
-    //
-    // //suzanne->addChild(mirror);
-    //
-    // // mirror->translate(glm::vec3(2.0f, 0.0f, 0.0f));
-    // // mirror->scale(glm::vec3(0.01f, 0.01f, 0.01f));
-    //
-    // auto ford = scene.addObject(GameObject("ford"));
-    // ford->model = core::AssimpLoader::loadModel("models/ford.obj");
-    // ford->translate(glm::vec3(30.0f, 0.0f, 0.0f));
-    // ford->rotate(glm::vec3(1,1,0), glm::radians(60.0f));
-    // ford->scale(glm::vec3(1.0f, 1.0f,  1.0f));
-    //mirror->addChild(ford);
-
     SceneManager sceneManager;
 
-    auto scene1 = sceneManager.createScene("Monkey");
-    auto monkey = std::make_shared<GameObject>("Strange Monkey");
-    auto suzanne = scene1->addObject(monkey);
-    suzanne->model = core::AssimpLoader::loadModel("models/nonormalmonkey.obj");
-    suzanne->translate(glm::vec3(-2.0f, 0.0f, 0.0f));
+    // auto scene1 = sceneManager.createScene("Cube");
+    // auto monkey = std::make_shared<GameObject>("Strange Monkey");
+    // auto suzanne = scene1->addObject(monkey);
+    // suzanne->model = core::AssimpLoader::loadModel("models/nonormalmonkey.obj");
+    // suzanne->translate(glm::vec3(-2.0f, 0.0f, 0.0f));
     //suzanne->addBehavior(std::make_shared<Translate>(1.0f,glm::vec3(0.1f, 0.0f, 0.0f)));
-     suzanne->addBehavior(std::make_shared<Rotate>(
-         glm::vec3(0, 1, 0), 1
-     ));
+     // suzanne->addBehavior(std::make_shared<Rotate>(
+     //     glm::vec3(0, 1, 0), 1
+     // ));
 
-    std::shared_ptr<LightObj> mainLight = nullptr;
+    auto scene1 = sceneManager.createScene("Cube");
+    auto cube = scene1->addObject(std::make_shared<GameObject>("Cube"));
+    cube->model = core::AssimpLoader::loadModel("models/cube.obj");
+    cube->translate(glm::vec3(0, 0, 0));
+
+
+    cube->collider = std::make_shared<ConvexCollider>(cube->model->getAllVertices(),cube->model->getAllIndices(),cube->getModelMatrix());
+    cube->collider->update(cube->getModelMatrix());
+
+
+    //std::shared_ptr<LightObj> mainLight = nullptr;
     //auto light = scene1->addObject(GameObject("Light"));
-    auto light = std::make_shared<LightObj>(glm::vec3(0.0f, 10.0f, 0.0f), glm::vec4(184.0f/256.0f, 23.0f/256.0f, 222.0f/256.0f, 0.0f),10);
-    mainLight = std::move(light);
-    auto lightSharedptr = std::make_shared<GameObject>("Point Light");
-    auto pointlight = scene1->addObject(lightSharedptr);
+    // auto light = std::make_shared<LightObj>(glm::vec3(0.0f, 10.0f, 0.0f), glm::vec4(184.0f/256.0f, 23.0f/256.0f, 222.0f/256.0f, 0.0f),10);
+    // mainLight = std::move(light);
+    // auto lightSharedptr = std::make_shared<GameObject>("Point Light");
+    // auto pointlight = scene1->addObject(lightSharedptr);
     //pointlight->translate(light->getPos());
+
 
 
     auto scene2 = sceneManager.createScene("Car");
@@ -240,10 +234,10 @@ int main() {
     quad2->translate(glm::vec3(-2.5f, 0.0f, 0.0f));
 
 
-    auto carSharedptr2 = std::make_shared<GameObject>("Car");
-    auto car2 = scene1->addObject(carSharedptr2);
-    car2->model = core::AssimpLoader::loadModel("models/car.obj");
-    car2->translate(glm::vec3(0.0f, 0.0f, -50.0f));
+    // auto carSharedptr2 = std::make_shared<GameObject>("Car");
+    // auto car2 = scene1->addObject(carSharedptr2);
+    // car2->model = core::AssimpLoader::loadModel("models/car.obj");
+    // car2->translate(glm::vec3(0.0f, 0.0f, -50.0f));
     //car->scale(glm::vec3(0.01f, 0.01f, 0.01f));
     // car->addBehavior(std::make_shared<Rotate>(
     //     glm::vec3(1, 0, 0), glm::radians(60.0f)
@@ -272,19 +266,19 @@ int main() {
     float rotationStrength = 100.0f;
 
     glm::vec3 guiLightPos;
-    if (mainLight) {
-        guiLightPos = mainLight->getPos();
-    } else {
-        guiLightPos = glm::vec3(0.0f, 3.0f, 0.0f);
-    }
-
-    glm::vec3 guiLightColor;
-
-    if (mainLight) {
-        guiLightColor = mainLight->getColor();
-    } else {
-        guiLightColor = glm::vec3(1.0f, 1.0f, 1.0f);
-    }
+    // if (mainLight) {
+    //     guiLightPos = mainLight->getPos();
+    // } else {
+    //     guiLightPos = glm::vec3(0.0f, 3.0f, 0.0f);
+    // }
+    //
+    // glm::vec3 guiLightColor;
+    //
+    // if (mainLight) {
+    //     guiLightColor = mainLight->getColor();
+    // } else {
+    //     guiLightColor = glm::vec3(1.0f, 1.0f, 1.0f);
+    // }
 
     float guiShininess = 75.0f;
     float guiSpecular = 42.0;
@@ -358,12 +352,12 @@ int main() {
         myStyle();
 
         if (ImGui::Begin("Let it be light",&IMGuiOpened)) {
-            ImGui::SliderFloat3("Light Position", glm::value_ptr(guiLightPos), 0.0f, 10.0f);
-            ImGui::ColorEdit3("Light Color", glm::value_ptr(guiLightColor));
-            ImGui::SliderFloat("Shininess", &guiShininess, 1.0f, 512.0f);
-            ImGui::SliderFloat("Specular Strength", &guiSpecular, 0.0f, 256.0f);
-            ImGui::SliderFloat("Ambient Strength", &guiAmbient, 0.0f, 1.0f);
-            ImGui::SliderFloat("Light Radis", &guiLightRadius, 0.0f, 100.0f);
+            //ImGui::SliderFloat3("Light Position", glm::value_ptr(guiLightPos), 0.0f, 10.0f);
+           // ImGui::ColorEdit3("Light Color", glm::value_ptr(guiLightColor));
+            // ImGui::SliderFloat("Shininess", &guiShininess, 1.0f, 512.0f);
+            // ImGui::SliderFloat("Specular Strength", &guiSpecular, 0.0f, 256.0f);
+            // ImGui::SliderFloat("Ambient Strength", &guiAmbient, 0.0f, 1.0f);
+            // ImGui::SliderFloat("Light Radis", &guiLightRadius, 0.0f, 100.0f);
 
             ImGui::Combo("Post Process", &currentPostProcessingMode, "None\0Grayscale\0Invert\0EdgeDetection\0Pixalization");
             if (currentPostProcessingMode==3) {
@@ -374,11 +368,11 @@ int main() {
             }
         } ImGui::End();
 
-        if (ImGui::Begin("MoveCar",&IMGuiOpenedCarWindow)) {
-            if (ImGui::SliderFloat3("Position",glm::value_ptr(car2->position),-80.0f,100.0f)) {
-                car2->setPos(car2->position);
-            }
-        } ImGui::End();
+        // if (ImGui::Begin("MoveCar",&IMGuiOpenedCarWindow)) {
+        //     if (ImGui::SliderFloat3("Position",glm::value_ptr(car2->position),-80.0f,100.0f)) {
+        //         car2->setPos(car2->position);
+        //     }
+        // } ImGui::End();
 
         processInput(window);
 
@@ -410,19 +404,40 @@ int main() {
         glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
+        // grayShader.Activate();
+        // grayShader.SetMat4Uniform("viewMatrix", view);
+        // grayShader.SetMat4Uniform("projMatrix", projection);
+
+
         modelShader.Activate();
         modelShader.SetVec3Uniform("lightPos", guiLightPos);
         modelShader.SetVec3Uniform("cameraPos", camera.getPos());
-        modelShader.SetVec3Uniform("lightColor", guiLightColor);
-        modelShader.SetFloatUniform("lightRadius", guiLightRadius);
-        modelShader.SetFloatUniform("ambientStrength", guiAmbient);
-        modelShader.SetFloatUniform("specularStrength", guiSpecular);
-        modelShader.SetFloatUniform("shininess", guiShininess);
-        modelShader.SetMat4Uniform("viewMatrix", view);
-        modelShader.SetMat4Uniform("projMatrix", projection);
-        modelShader.BindTexture("textures/CMGaTo_crop.jpg", cmgtGatoTexture.getId(), 0);
+        //modelShader.SetVec3Uniform("lightColor", guiLightColor);
+         modelShader.SetFloatUniform("lightRadius", guiLightRadius);
+         modelShader.SetFloatUniform("ambientStrength", guiAmbient);
+         modelShader.SetFloatUniform("specularStrength", guiSpecular);
+         modelShader.SetFloatUniform("shininess", guiShininess);
+         modelShader.SetMat4Uniform("viewMatrix", view);
+         modelShader.SetMat4Uniform("projMatrix", projection);
+         modelShader.BindTexture("textures/CMGaTo_crop.jpg", cmgtGatoTexture.getId(), 0);
 
         sceneManager.render(modelShader, projection, view);
+
+
+        glDisable(GL_DEPTH_TEST);
+        glLineWidth(1.5f);
+
+        auto activeScene = sceneManager.getActiveScene();
+        for (size_t i = 0; i < activeScene->objects.size(); i++) {
+            std::shared_ptr<GameObject> obj = activeScene->objects[i];
+
+            if (obj->collider) {
+                obj->collider->update(obj->getModelMatrix());
+                obj->collider->drawEdges();
+            }
+        }
+
+        glEnable(GL_DEPTH_TEST);
 
         glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
