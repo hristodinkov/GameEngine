@@ -15,6 +15,8 @@ uniform float ambientStrength;
 uniform float specularStrength;
 uniform float shininess;
 
+uniform vec3 color;
+
 
 uniform vec3 cameraPos;
 void main()
@@ -49,5 +51,5 @@ void main()
 //     {
 //         lighting = ambient;
 //     }
-    FragColor = vec4(0.0,1.0,0.0, 1.0);
+    FragColor = vec4(color, 1.0);
 }

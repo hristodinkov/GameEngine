@@ -45,9 +45,6 @@ ConvexCollider::ConvexCollider(const std::vector<glm::vec3> &vertices, const std
         addEdge(i1, i2, edgeCount);
         addEdge(i2, i0, edgeCount);
 
-        // -----------------------------
-        // 4. Compute face normal
-        // -----------------------------
         glm::vec3 v0 = vertices[i0];
         glm::vec3 v1 = vertices[i1];
         glm::vec3 v2 = vertices[i2];
@@ -66,6 +63,19 @@ ConvexCollider::ConvexCollider(const std::vector<glm::vec3> &vertices, const std
             edgeIndexPairs.push_back(edge);
         }
     }
+    allEdges.clear();
+
+    for (size_t i = 0; i < modelIndices.size(); i += 3)
+    {
+        unsigned int i0 = modelIndices[i];
+        unsigned int i1 = modelIndices[i + 1];
+        unsigned int i2 = modelIndices[i + 2];
+
+        allEdges.push_back({i0, i1});
+        allEdges.push_back({i1, i2});
+        allEdges.push_back({i2, i0});
+    }
+
 };
 
 void ConvexCollider::update(const glm::mat4 &worldTransform) {
@@ -84,8 +94,8 @@ std::vector<glm::vec3> ConvexCollider::getFaceNormals() const {
     return faceNormals;
 }
 
-std::vector<glm::vec3> ConvexCollider::getEdges() const {
-    return edges;
+std::vector<std::pair<unsigned int, unsigned int>> ConvexCollider::getEdges() const {
+    return allEdges;
 }
 std::vector<glm::vec3> ConvexCollider::getLineVertices() const {
     std::vector<glm::vec3> verts;

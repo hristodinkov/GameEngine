@@ -26,6 +26,7 @@ public:
     std::vector<std::shared_ptr<GameObject>> children;
     std::vector<std::shared_ptr<Behavior>> behaviors;
     std::shared_ptr<ConvexCollider> collider;
+    bool isColliding = false;
 
     GameObject(std::string name = "GameObject");
 

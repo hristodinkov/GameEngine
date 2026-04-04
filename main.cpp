@@ -244,13 +244,15 @@ int main() {
 
     core::Mesh cubeMesh (cubeVertices, cubeIndices);
     core::Model cubeModel({cubeMesh});
-    auto cubeGO = std::make_shared<GameObject>("Cube");
-    cubeGO->model = cubeModel;
+    auto cube1 = scene1->addObject(std::make_shared<GameObject>("Cube1"));
+    cube1->model = cubeModel;
+    cube1->translate(glm::vec3(-2.0f, 0.0f, 0.0f));
+    cube1->collider = std::make_shared<ConvexCollider>(cube1->model->getAllVertices(),cube1->model->getAllIndices(),cube1->getWorldTransform());
 
-    cubeGO->collider = std::make_shared<ConvexCollider>(cubeGO->model->getAllVertices(),cubeGO->model->getAllIndices(),cubeGO->getWorldTransform());
-
-
-
+    auto cube2 = scene1->addObject(std::make_shared<GameObject>("Cube2"));
+    cube2->model = cubeModel;
+    cube2->translate(glm::vec3(2.0f, 0.0f, 0.0f));
+    cube2->collider = std::make_shared<ConvexCollider>(cube2->model->getAllVertices(),cube2->model->getAllIndices(),cube2->getWorldTransform());
 
     //std::shared_ptr<LightObj> mainLight = nullptr;
     //auto light = scene1->addObject(GameObject("Light"));
@@ -409,28 +411,43 @@ int main() {
         ImGui::NewFrame();
         myStyle();
 
-        if (ImGui::Begin("Let it be light",&IMGuiOpened)) {
-            //ImGui::SliderFloat3("Light Position", glm::value_ptr(guiLightPos), 0.0f, 10.0f);
-           // ImGui::ColorEdit3("Light Color", glm::value_ptr(guiLightColor));
-            // ImGui::SliderFloat("Shininess", &guiShininess, 1.0f, 512.0f);
-            // ImGui::SliderFloat("Specular Strength", &guiSpecular, 0.0f, 256.0f);
-            // ImGui::SliderFloat("Ambient Strength", &guiAmbient, 0.0f, 1.0f);
-            // ImGui::SliderFloat("Light Radis", &guiLightRadius, 0.0f, 100.0f);
-
-            ImGui::Combo("Post Process", &currentPostProcessingMode, "None\0Grayscale\0Invert\0EdgeDetection\0Pixalization");
-            if (currentPostProcessingMode==3) {
-                ImGui::SliderFloat("Kernel Central Value",&kernelCenterValueMatrix,0,-20);
-            }
-            if (currentPostProcessingMode == 4) {
-                ImGui::SliderFloat("Pixels",&pixels,1,1024);
-            }
-        } ImGui::End();
+        // if (ImGui::Begin("Let it be light",&IMGuiOpened)) {
+        //     //ImGui::SliderFloat3("Light Position", glm::value_ptr(guiLightPos), 0.0f, 10.0f);
+        //    // ImGui::ColorEdit3("Light Color", glm::value_ptr(guiLightColor));
+        //     // ImGui::SliderFloat("Shininess", &guiShininess, 1.0f, 512.0f);
+        //     // ImGui::SliderFloat("Specular Strength", &guiSpecular, 0.0f, 256.0f);
+        //     // ImGui::SliderFloat("Ambient Strength", &guiAmbient, 0.0f, 1.0f);
+        //     // ImGui::SliderFloat("Light Radis", &guiLightRadius, 0.0f, 100.0f);
+        //
+        //     ImGui::Combo("Post Process", &currentPostProcessingMode, "None\0Grayscale\0Invert\0EdgeDetection\0Pixalization");
+        //     if (currentPostProcessingMode==3) {
+        //         ImGui::SliderFloat("Kernel Central Value",&kernelCenterValueMatrix,0,-20);
+        //     }
+        //     if (currentPostProcessingMode == 4) {
+        //         ImGui::SliderFloat("Pixels",&pixels,1,1024);
+        //     }
+        // } ImGui::End();
 
         // if (ImGui::Begin("MoveCar",&IMGuiOpenedCarWindow)) {
         //     if (ImGui::SliderFloat3("Position",glm::value_ptr(car2->position),-80.0f,100.0f)) {
         //         car2->setPos(car2->position);
         //     }
         // } ImGui::End();
+
+        if (ImGui::Begin("Cube Controls"))
+        {
+            ImGui::Text("Move Cube 1");
+            if (ImGui::SliderFloat3("Cube1 Pos", glm::value_ptr(cube1->position), -10.0f, 10.0f))
+                cube1->setPos(cube1->position);
+
+            ImGui::Separator();
+
+            ImGui::Text("Move Cube 2");
+            if (ImGui::SliderFloat3("Cube2 Pos", glm::value_ptr(cube2->position), -10.0f, 10.0f))
+                cube2->setPos(cube2->position);
+        }
+        ImGui::End();
+
 
         processInput(window);
 
@@ -484,8 +501,8 @@ int main() {
 
 
         glLineWidth(5.0f);
-
-        auto verts = cubeGO->collider->getLineVertices();
+        glDisable(GL_DEPTH_TEST);
+        auto verts = cube1->collider->getLineVertices();
 
         lineShader.Activate();
         lineShader.SetMat4Uniform("viewMatrix", view);
@@ -493,17 +510,21 @@ int main() {
         lineShader.SetVec3Uniform("color", glm::vec3(0,1,0));
 
         glBindVertexArray(debugVAO);
-        glBindBuffer(GL_ARRAY_BUFFER, debugVBO);
-        glBufferData(GL_ARRAY_BUFFER, verts.size() * sizeof(glm::vec3), verts.data(), GL_DYNAMIC_DRAW);
+        auto activeScene = sceneManager.getActiveScene();
+        for (auto& obj : activeScene->objects)
+        {
+            if (!obj->collider) continue;
 
-        glDrawArrays(GL_LINES, 0, verts.size());
+            auto verts = obj->collider->getLineVertices();
+
+            glBindBuffer(GL_ARRAY_BUFFER, debugVBO);
+            glBufferData(GL_ARRAY_BUFFER, verts.size() * sizeof(glm::vec3), verts.data(), GL_DYNAMIC_DRAW);
+
+            glDrawArrays(GL_LINES, 0, verts.size());
+        }
+
         glBindVertexArray(0);
-
-
-
-
-        glBindFramebuffer(GL_FRAMEBUFFER, 0);
-
+       glEnable(GL_DEPTH_TEST);
         if (currentPostProcessingMode != 0) {
             glDisable(GL_DEPTH_TEST);
             glDisable(GL_CULL_FACE); //triangles that does not face the camera

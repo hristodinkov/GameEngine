@@ -30,13 +30,14 @@ public:
     glm::vec3 aabbMin ;
     glm::vec3 aabbMax;
     std::vector<std::pair<unsigned int, unsigned int>> edgeIndexPairs;
+    std::vector<std::pair<unsigned int, unsigned int>> allEdges;
 
     ConvexCollider(const std::vector<glm::vec3>& vertices,const std::vector<unsigned int>& indices,const glm::mat4 modelMatrix);
 
     void update(const glm::mat4& worldTransform);
 
     std::vector<glm::vec3> getFaceNormals() const;
-    std::vector<glm::vec3> getEdges() const;
+    std::vector<std::pair<unsigned int, unsigned int>> getEdges() const;
 
     void project(const glm::vec3& axis, float& outMin, float& outMax) const;
 

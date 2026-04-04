@@ -65,6 +65,6 @@ namespace core {
     void Mesh::render() {
         glBindVertexArray(VAO);
         glLineWidth(3.0f);
-        glDrawElements(GL_LINES, static_cast<GLsizei>(indices.size()), GL_UNSIGNED_INT, 0);
+        glDrawElements(GL_TRIANGLES, static_cast<GLsizei>(indices.size()), GL_UNSIGNED_INT, 0);
     }
 }
