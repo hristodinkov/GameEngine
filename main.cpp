@@ -483,7 +483,7 @@ int main() {
 
 
 
-        glLineWidth(1.5f);
+        glLineWidth(5.0f);
 
         auto verts = cubeGO->collider->getLineVertices();
 

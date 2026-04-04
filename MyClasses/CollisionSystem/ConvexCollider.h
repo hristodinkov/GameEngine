@@ -40,9 +40,7 @@ public:
 
     void project(const glm::vec3& axis, float& outMin, float& outMax) const;
 
-    void addEdge(unsigned int a, unsigned int b,std::set<std::pair<unsigned int, unsigned int>>& uniqueEdges);
-
-    void drawEdges(Shader& shader,const glm::mat4& view, const glm::mat4& proj) const;
+    void addEdge(unsigned int a, unsigned int b,std::map<std::pair<unsigned int, unsigned int>, int> &edgeCount);
 
     std::vector<glm::vec3> getLineVertices() const;
 
