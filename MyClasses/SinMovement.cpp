@@ -6,10 +6,6 @@
 #include "GameObject.h"
 #include <cmath>
 
-
-float localTime = 0.0f;
-
-
 void SinMovement::update(float deltaTime)
 {
     localTime += deltaTime;

@@ -11,6 +11,7 @@
 extern float gBenchmarkTime;
 
 class SinMovement:public Behavior{
+    float localTime = 0.0f;
     int axis;
     float speed;
     float amplitude;

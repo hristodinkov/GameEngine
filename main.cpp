@@ -173,7 +173,7 @@ int main() {
     glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
 #endif
 
-    GLFWwindow *window = glfwCreateWindow(g_width, g_height, "LearnOpenGL", NULL, NULL);
+    GLFWwindow *window = glfwCreateWindow(g_width, g_height, "SpaceEngine", NULL, NULL);
 
     if (window == NULL) {
         printf("Failed to create GLFW window\n");
@@ -251,8 +251,9 @@ int main() {
     auto cube1 = scene1->addObject(std::make_shared<GameObject>("Cube1"));
     cube1->model = cubeModel;
     cube1->translate(glm::vec3(-2.0f, 0.0f, 0.0f));
+    //cube1->rotate(glm::vec3(1.0f, 0.0f, 0.0f),90);
     cube1->collider = std::make_shared<ConvexCollider>(cube1->model->getAllVertices(),cube1->model->getAllIndices(),cube1->getWorldTransform());
-    //cube1->addBehavior(std::make_shared<SinMovement>(1,1.5,5,2));
+
 
     auto cube2 = scene1->addObject(std::make_shared<GameObject>("Cube2"));
     cube2->model = cubeModel;
@@ -308,9 +309,9 @@ int main() {
 
 
 
-    camera.translate(glm::vec3(0.0f, 0.0f, 50.0f));
+    camera.translate(glm::vec3(0.0f, 0.0f, 20.0f));
     //camera.rotate(glm::vec3(1,0,0), -10.0f * 3.1415f / 180);
-    camera.speed = 0.007f;
+    camera.speed = 0.02f;
 
     double currentTime = glfwGetTime();
     double finishFrameTime = 0.0;
@@ -459,6 +460,7 @@ int main() {
             if (ImGui::SliderFloat3("Cube1 Pos", glm::value_ptr(cube1->position), -10.0f, 10.0f))
                 cube1->setPos(cube1->position);
 
+
             ImGui::Separator();
 
             ImGui::Text("Move Cube 2");
@@ -523,7 +525,7 @@ int main() {
 
         sceneManager.update(deltaTime);
 
-        projection = glm::perspective(glm::radians(camera.fov), aspect, 0.1f, 100.0f);
+        projection = glm::perspective(glm::radians(camera.fov), aspect, 0.1f, 400.0f);
         //pos, target,up
         view = glm::lookAt(camera.getPos(),camera.getPos() + camera.getForward(),camera.getUp());
 

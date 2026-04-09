@@ -63,3 +63,5 @@ void GameObject::render(Shader& shader,const glm::mat4& projection,const glm::ma
     for (auto& c : children)
         c->render(shader, projection, view);
 }
+
+

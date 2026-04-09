@@ -6,6 +6,7 @@
 #include "Random.h"
 #include <iostream>
 
+#include "Rotate.h"
 #include "SinMovement.h"
 
 SceneManager::SceneManager(core::Model cube) : model(cube) {}
@@ -58,22 +59,24 @@ void SceneManager::spawnCubesInScene(int count,int seed) {
     if (!scene) return;
 
 
-    //float border = cbrtf((float)count) * 0.5;
+    float border = count/2.5;
 
     for (int i = 0; i < count; i++) {
         auto cube = scene->addObject(std::make_shared<GameObject>("Cube"+std::to_string(i)));
 
         glm::vec3 r = rand3(glm::vec3(i,seed,i*0.5),seed);
 
-        float x = (r.x*2.0f-1.0f)*count;
-        float y = (r.y*2.0f-1.0f)*count;
-        float z = (r.z*2.0f-1.0f)*count;
+        float x = (r.x*2.0f-1.0f)*border;
+        float y = (r.y*2.0f-1.0f)*border;
+        float z = (r.z*2.0f-1.0f)*border;
 
         cube->setPos(glm::vec3(x,y,z));
 
+        float amplitude = border ;
         cube->model = model;
         cube->collider = std::make_shared<ConvexCollider>(cube->model->getAllVertices(),cube->model->getAllIndices(),cube->getWorldTransform());
-        cube->addBehavior(std::make_shared<SinMovement>(floor(r.x*3),0.5f,0.5f,r.y*6.28,count));
+        cube->addBehavior(std::make_shared<SinMovement>(floor(r.x*3),0.5f,amplitude,r.y*6.7f,border));
+
     }
 }
 void SceneManager::clearObjects() {
