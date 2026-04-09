@@ -17,8 +17,11 @@
 #include "MyClasses/Rotate.h"
 #include "MyClasses/Scene.h"
 #include "MyClasses/SceneManager.h"
+#include "MyClasses/SinMovement.h"
 #include "MyClasses/Style.h"
 
+#include "MyClasses/CollisionSystem/BenchmarkRunner.h"
+#include "MyClasses/CollisionSystem/BenschmarkWriter.h"
 
 
 //#define MAC_CLION
@@ -221,7 +224,9 @@ int main() {
 
     Shader lineShader("shaders/line.vs","shaders/line.fs");
 
-    SceneManager sceneManager;
+    core::Mesh cubeMesh (cubeVertices, cubeIndices);
+    core::Model cubeModel({cubeMesh});
+    SceneManager sceneManager(cubeModel);
 
     // auto scene1 = sceneManager.createScene("Cube");
     // auto monkey = std::make_shared<GameObject>("Strange Monkey");
@@ -242,12 +247,12 @@ int main() {
     // cube->collider = std::make_shared<ConvexCollider>(cube->model->getAllVertices(),cube->model->getAllIndices(),cube->getModelMatrix());
     // cube->collider->update(cube->getModelMatrix());
 
-    core::Mesh cubeMesh (cubeVertices, cubeIndices);
-    core::Model cubeModel({cubeMesh});
+
     auto cube1 = scene1->addObject(std::make_shared<GameObject>("Cube1"));
     cube1->model = cubeModel;
     cube1->translate(glm::vec3(-2.0f, 0.0f, 0.0f));
     cube1->collider = std::make_shared<ConvexCollider>(cube1->model->getAllVertices(),cube1->model->getAllIndices(),cube1->getWorldTransform());
+    //cube1->addBehavior(std::make_shared<SinMovement>(1,1.5,5,2));
 
     auto cube2 = scene1->addObject(std::make_shared<GameObject>("Cube2"));
     cube2->model = cubeModel;
@@ -303,13 +308,21 @@ int main() {
 
 
 
-    camera.translate(glm::vec3(0.0f, 0.0f, 10.0f));
+    camera.translate(glm::vec3(0.0f, 0.0f, 50.0f));
     //camera.rotate(glm::vec3(1,0,0), -10.0f * 3.1415f / 180);
     camera.speed = 0.007f;
 
     double currentTime = glfwGetTime();
     double finishFrameTime = 0.0;
     float deltaTime = 0.0f;
+    float fps = 0.0f;
+    float fpsTimer = 0.0f;
+    int fpsFrames = 0;
+    double averageTimePerSAT = 0;
+    BenchmarkConfig cfg;
+    static int objectCountInput = 10;
+    static bool objectsSpawned = false;
+
     float rotationStrength = 100.0f;
 
     glm::vec3 guiLightPos;
@@ -434,6 +447,12 @@ int main() {
         //     }
         // } ImGui::End();
 
+        if (sceneManager.getSatCount()>0) {
+            averageTimePerSAT = sceneManager.getSatTime()/sceneManager.getSatCount();
+        }
+        else {
+            averageTimePerSAT = 0;
+        }
         if (ImGui::Begin("Cube Controls"))
         {
             ImGui::Text("Move Cube 1");
@@ -445,6 +464,51 @@ int main() {
             ImGui::Text("Move Cube 2");
             if (ImGui::SliderFloat3("Cube2 Pos", glm::value_ptr(cube2->position), -10.0f, 10.0f))
                 cube2->setPos(cube2->position);
+        }
+        ImGui::End();
+
+        static int bmObjectCount = 10;
+        static float bmDuration = 10.0f;
+        static bool bmUseGrid = false;
+        static char bmLabel[64] = "baseline";
+
+        if (ImGui::Begin("Benchmark")) {
+            ImGui::InputInt("Object Count", &bmObjectCount);
+            ImGui::InputFloat("Duration (s)", &bmDuration);
+            ImGui::Checkbox("Use Grid", &bmUseGrid);
+            ImGui::InputText("Label", bmLabel, sizeof(bmLabel));
+
+            if (ImGui::Button("Spawn Objects")) {
+
+                cfg.objectCount = bmObjectCount;
+                cfg.testDurationSeconds = bmDuration;
+                cfg.useGrid = bmUseGrid;
+                cfg.label = bmLabel;
+                cfg.randomSeed = 47;
+                sceneManager.spawnCubesInScene(cfg.objectCount,cfg.randomSeed);
+            }
+            if (ImGui::Button("Run test")) {
+                BenchmarkRunner runner(sceneManager, window, cubeModel);
+                auto result = runner.run(cfg);
+
+                std::string filename = std::string("benchmark_") + bmLabel + ".xls";
+                writeExcel(result,filename);
+            }
+        }
+        ImGui::End();
+
+
+
+        if (ImGui::Begin("Performance"))
+        {
+            ImGui::Text("FPS: %.1f", fps);
+            ImGui::Text("Frame Time: %.3f ms", deltaTime * 1000.0f);
+
+            ImGui::Separator();
+            ImGui::Text("SAT Tests This Frame: %d", sceneManager.getSatCount());
+            ImGui::Text("SAT Time: %.6f s", sceneManager.getSatTime());
+            ImGui::Text("Avg Time per SAT: %.9f s", averageTimePerSAT);
+
         }
         ImGui::End();
 
@@ -524,45 +588,45 @@ int main() {
         }
 
         glBindVertexArray(0);
-       glEnable(GL_DEPTH_TEST);
-        if (currentPostProcessingMode != 0) {
-            glDisable(GL_DEPTH_TEST);
-            glDisable(GL_CULL_FACE); //triangles that does not face the camera
+        glEnable(GL_DEPTH_TEST);
+            if (currentPostProcessingMode != 0) {
+                glDisable(GL_DEPTH_TEST);
+                glDisable(GL_CULL_FACE); //triangles that does not face the camera
 
-            glViewport(0, 0, g_width, g_height);
-            glClear(GL_COLOR_BUFFER_BIT);
+                glViewport(0, 0, g_width, g_height);
+                glClear(GL_COLOR_BUFFER_BIT);
 
-            Shader* activeShader = nullptr;
+                Shader* activeShader = nullptr;
 
-            if (currentPostProcessingMode == 1) {
-                activeShader = &greyShader;
-            }
-            else if (currentPostProcessingMode == 2) {
-                activeShader = &invertColorsShader;
-            }
-            else if (currentPostProcessingMode == 3) {
-                activeShader = &edgeDetectionShader;
-            }
-            else if (currentPostProcessingMode == 4) {
-                activeShader = &pixelizationShader;
+                if (currentPostProcessingMode == 1) {
+                    activeShader = &greyShader;
+                }
+                else if (currentPostProcessingMode == 2) {
+                    activeShader = &invertColorsShader;
+                }
+                else if (currentPostProcessingMode == 3) {
+                    activeShader = &edgeDetectionShader;
+                }
+                else if (currentPostProcessingMode == 4) {
+                    activeShader = &pixelizationShader;
 
-            }
+                }
 
-            if (activeShader != nullptr) {
-                activeShader->Activate();
-                activeShader->SetIntUniform("screenTexture", 0);
-                activeShader->SetFloatUniform("Pixels",pixels);
-                activeShader->SetFloatUniform("kernelCenterValue",kernelCenterValueMatrix);
+                if (activeShader != nullptr) {
+                    activeShader->Activate();
+                    activeShader->SetIntUniform("screenTexture", 0);
+                    activeShader->SetFloatUniform("Pixels",pixels);
+                    activeShader->SetFloatUniform("kernelCenterValue",kernelCenterValueMatrix);
 
-                glActiveTexture(GL_TEXTURE0);
-                glBindTexture(GL_TEXTURE_2D, fbTexture);
+                    glActiveTexture(GL_TEXTURE0);
+                    glBindTexture(GL_TEXTURE_2D, fbTexture);
 
-                glBindVertexArray(quadVAO);
-                glDrawArrays(GL_TRIANGLES, 0, 6);
-                glBindVertexArray(0);
-            }
+                    glBindVertexArray(quadVAO);
+                    glDrawArrays(GL_TRIANGLES, 0, 6);
+                    glBindVertexArray(0);
+                }
 
-            glEnable(GL_CULL_FACE);
+                glEnable(GL_CULL_FACE);
         }
 
         ImGui::Render();
@@ -573,6 +637,15 @@ int main() {
         finishFrameTime = glfwGetTime();
         deltaTime = static_cast<float>(finishFrameTime - currentTime);
         currentTime = finishFrameTime;
+        // FPS calculation
+        fpsFrames++;
+        fpsTimer += deltaTime;
+
+        if (fpsTimer >= 1.0f) {   // update every 1 second
+            fps = fpsFrames / fpsTimer;
+            fpsFrames = 0;
+            fpsTimer = 0.0f;
+        }
     }
     ImGui_ImplOpenGL3_Shutdown();
     ImGui_ImplGlfw_Shutdown();

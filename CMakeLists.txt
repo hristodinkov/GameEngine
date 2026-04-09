@@ -41,6 +41,15 @@ set(IMGUI_SOURCES
         MyClasses/CollisionSystem/ConvexCollider.cpp
         MyClasses/CollisionSystem/ConvexCollider.h
         MyClasses/CollisionSystem/Collision.cpp
+        MyClasses/CollisionSystem/Benchmark.h
+        MyClasses/CollisionSystem/BenchmarkRunner.cpp
+        MyClasses/CollisionSystem/BenchmarkRunner.h
+        MyClasses/CollisionSystem/BenschmarkWriter.cpp
+        MyClasses/CollisionSystem/BenschmarkWriter.h
+        MyClasses/Random.cpp
+        MyClasses/Random.h
+        MyClasses/SinMovement.cpp
+        MyClasses/SinMovement.h
 )
 
 add_executable(RawEngine main.cpp
@@ -53,6 +62,8 @@ add_executable(RawEngine main.cpp
         core/model.cpp
         core/model.h
 )
+find_package(xlnt CONFIG REQUIRED)
+target_link_libraries(RawEngine PRIVATE xlnt::xlnt)
 
 add_custom_command(
         TARGET RawEngine PRE_BUILD

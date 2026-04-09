@@ -14,10 +14,19 @@ class SceneManager {
 private:
     std::unordered_map<std::string, std::shared_ptr<Scene>> scenesDictionary;
     std::shared_ptr<Scene> currentScene = nullptr;
+    core::Model model;
 public:
+
+    SceneManager(core::Model);
     std::shared_ptr<Scene> createScene(const std::string& name);
     void setActiveScene(const std::string& name);
     std::shared_ptr<Scene> getActiveScene() const;
+
+    int getSatCount() const;
+    double getSatTime() const;
+
+    void spawnCubesInScene(int count,int seed);
+    void clearObjects();
 
     void update(float deltaTime);
     void render(Shader& shader,const glm::mat4& projection,const glm::mat4& view);
