@@ -7,5 +7,6 @@
 #include "GameObject.h"
 
 void Translate::update(float deltaTime) {
-    owner->translate(direction * speed * deltaTime);
+    owner->transform.translate(direction * speed * deltaTime);
+
 }

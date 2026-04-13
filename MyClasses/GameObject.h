@@ -18,7 +18,7 @@
 #include "CollisionSystem/ConvexCollider.h"
 
 
-class GameObject:public Transform {
+class GameObject {
 public:
     std::string name;
     std::optional<core::Model> model;
@@ -27,6 +27,7 @@ public:
     std::vector<std::shared_ptr<Behavior>> behaviors;
     std::shared_ptr<ConvexCollider> collider;
     bool isColliding = false;
+    Transform transform = Transform();
 
     GameObject(std::string name = "GameObject");
 
@@ -41,6 +42,11 @@ public:
     glm::mat4 getWorldTransform() const;
 
     void render(Shader& shader,const glm::mat4& projection,const glm::mat4& view);
+
+    void setPos(const glm::vec3& pos);
+
+    glm::vec3 getPos() const;
+
 };
 
 

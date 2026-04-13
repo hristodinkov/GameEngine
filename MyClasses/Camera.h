@@ -10,7 +10,7 @@
 #include <GLFW/glfw3.h>
 using namespace std;
 
-class Camera : public Transform {
+class Camera {
 
 public:
     float speed;
@@ -21,6 +21,7 @@ public:
     float xRotation = 0.0f;
     float sensitivity = 0.1f;
 
+    Transform transform;
     float fov =45.0f;
     float fovSpeed =5;
 

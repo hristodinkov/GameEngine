@@ -10,22 +10,22 @@
 void Camera::Move(GLFWwindow *window) {
 
     if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS) {
-        this->translate(glm::vec3(0,0,-speed));
+        this->transform.translate(glm::vec3(0,0,-speed));
     }
     if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS) {
-        this->translate(glm::vec3(0,0,speed));
+        this->transform.translate(glm::vec3(0,0,speed));
     }
     if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS) {
-        this->translate(glm::vec3(-speed,0,0));
+        this->transform.translate(glm::vec3(-speed,0,0));
     }
     if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS) {
-        this->translate(glm::vec3(speed,0,0));
+        this->transform.translate(glm::vec3(speed,0,0));
     }
     if (glfwGetKey(window, GLFW_KEY_E) == GLFW_PRESS) {
-        this->translate(glm::vec3(0,-speed,0));
+        this->transform.translate(glm::vec3(0,-speed,0));
     }
     if (glfwGetKey(window, GLFW_KEY_Q) == GLFW_PRESS) {
-        this->translate(glm::vec3(0,speed,0));
+        this->transform.translate(glm::vec3(0,speed,0));
     }
     if (glfwGetKey(window, GLFW_KEY_Z) == GLFW_PRESS) {
         fov -= fovSpeed * 0.01f; // decrease FOV to zoom in
@@ -70,14 +70,15 @@ void Camera::Rotate(GLFWwindow *window) {
             xRotation = -89.0f;
         }
 
-        glm::vec3 currentPosition = glm::vec3(modelMatrix[3]);
 
-        glm::mat4 rotationMatrix = glm::rotate(glm::mat4(1.0f), glm::radians(yRotation), glm::vec3(0.0f, 1.0f, 0.0f));
+        transform.rotation = glm::vec3(
+            glm::radians(xRotation),
+            glm::radians(yRotation),
+            0.0f
+        );
 
-        rotationMatrix = glm::rotate(rotationMatrix, glm::radians(xRotation), glm::vec3(1.0f, 0.0f, 0.0f));
 
-        glm::mat4 translationMatrix = glm::translate(glm::mat4(1.0f), currentPosition);
-        modelMatrix = translationMatrix * rotationMatrix;
+        transform.updateModelMatrix();
 
     }
     else {
@@ -85,17 +86,25 @@ void Camera::Rotate(GLFWwindow *window) {
     }
 }
 glm::vec3 Camera::getPos() const {
-    return glm::vec3(modelMatrix[3]);
+    return  transform.position;
 }
 
 glm::vec3 Camera::getForward() const {
-    return glm::normalize(glm::vec3(modelMatrix * glm::vec4(0,0,-1,0)));
+
+    float yawRad   = glm::radians(yRotation);
+    float pitchRad = glm::radians(xRotation);
+
+    return glm::normalize(glm::vec3(
+        cos(pitchRad) * sin(yawRad),
+        sin(pitchRad),
+        -cos(pitchRad) * cos(yawRad)
+    ));
 }
 
 glm::vec3 Camera::getRight() const {
-    return glm::normalize(glm::vec3(modelMatrix * glm::vec4(1,0,0,0)));
+    return glm::normalize(glm::cross(getForward(), glm::vec3(0,1,0)));
 }
 
 glm::vec3 Camera::getUp() const {
-    return glm::normalize(glm::vec3(modelMatrix * glm::vec4(0,1,0,0)));
+    return glm::normalize(glm::cross(getRight(), getForward()));
 }

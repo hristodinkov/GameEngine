@@ -28,20 +28,15 @@ void BenchmarkRunner::setupScene(const BenchmarkConfig& config) {
         auto go = scene->addObject(std::make_shared<GameObject>("Cube" + std::to_string(i)));
         go->model = cubeModel;
 
-        // deterministic random position
         glm::vec2 r = rand2(glm::vec2(i, config.randomSeed), 3.0f);
 
-        // axis = 0, 1, or 2
         int axis = int(r.x * 3.0f) % 3;
 
-        // deterministic speed
         float speed = 0.5f + r.y * 2.0f;
 
-        // deterministic phase
         glm::vec2 rPhase = rand2(glm::vec2(i, config.randomSeed), 4.0f);
         float phase = rPhase.x * 6.283185f;
 
-        // amplitude
         float amplitude = 2.0f;
 
         go->addBehavior(std::make_shared<SinMovement>(axis, speed, amplitude, phase));
@@ -70,16 +65,19 @@ BenchmarkResult BenchmarkRunner::run(const BenchmarkConfig& config) {
         double now = glfwGetTime();
         double elapsed = now - startTime;
         float deltaTime = static_cast<float>(now - lastTime);
+        float fps;
         lastTime = now;
 
         if (elapsed >= config.testDurationSeconds)
             break;
 
-        // update engine
         sceneManager.update(deltaTime);
 
-        // collect metrics
-        float fps = (deltaTime > 0.0f) ? 1.0f / deltaTime : 0.0f;
+        if(deltaTime > 0.0f) {
+            fps = 1.0f / deltaTime;
+        }else {
+            fps = 0.0f;
+        }
         int satCount = sceneManager.getSatCount();
         double satTime = sceneManager.getSatTime();
 
@@ -90,7 +88,6 @@ BenchmarkResult BenchmarkRunner::run(const BenchmarkConfig& config) {
         s.satTests = satCount;
         s.satTime = satTime;
         result.samples.push_back(s);
-
 
         gBenchmarkTime = float(elapsed);
         glfwPollEvents();

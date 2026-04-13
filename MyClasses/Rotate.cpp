@@ -8,5 +8,7 @@
 
 
 void Rotate::update(float deltaTime) {
-    owner->rotate(axis, speed * deltaTime);
+    owner->transform.setRotation(axis*speed*deltaTime);
+
+
 }

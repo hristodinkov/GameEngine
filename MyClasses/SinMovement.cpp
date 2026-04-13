@@ -13,7 +13,6 @@ void SinMovement::update(float deltaTime)
     float value = sin(localTime * speed + phaseOffset) * amplitude;
 
     glm::vec3 pos = owner->getPos();
-
     if (axis == 0) pos.x = value;
     else if (axis == 1) pos.y = value;
     else pos.z = value;

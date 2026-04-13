@@ -4,6 +4,8 @@
 
 #include "GameObject.h"
 
+#include <algorithm>
+#include <__msvc_ranges_to.hpp>
 #include <glm/gtc/type_ptr.hpp>
 
 
@@ -30,11 +32,6 @@ void GameObject::update(float deltaTime) {
     if (collider)
         collider->update(getWorldTransform());
 
-}
-glm::mat4 GameObject::getWorldTransform() const {
-    if (parent)
-        return parent->getWorldTransform() * getModelMatrix();
-    return getModelMatrix();
 }
 
 void GameObject::render(Shader& shader,const glm::mat4& projection,const glm::mat4& view) {
@@ -64,4 +61,16 @@ void GameObject::render(Shader& shader,const glm::mat4& projection,const glm::ma
         c->render(shader, projection, view);
 }
 
+glm::mat4 GameObject::getWorldTransform() const {
+    if (parent)
+        return parent->getWorldTransform() * transform.getModelMatrix();
+    return transform.getModelMatrix();
+}
 
+void GameObject::setPos(const glm::vec3& p) {
+    transform.setPos(p);
+}
+
+glm::vec3 GameObject::getPos() const {
+    return transform.position;
+}

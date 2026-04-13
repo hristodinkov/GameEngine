@@ -12,24 +12,26 @@
 
 class Transform {
 public:
-
-    glm::mat4 modelMatrix;
     glm::vec3 position;
+    glm::vec3 rotation;
     glm::vec3 scaleFactors;
-public:
+    glm::mat4 modelMatrix;
+
     Transform();
-    void translate(glm::vec3 translation);
-    void rotate(glm::vec3 axis, float radians);
-    void scale(glm::vec3 scale);
+
+    void setPos(const glm::vec3& pos);
+    void setRotation(const glm::vec3& rot);
+    void setScale(const glm::vec3& scale);
+
+    void translate(const glm::vec3& delta);
+    void rotate(const glm::vec3& deltaEuler);
+    void scale(const glm::vec3& deltaScale);
+
     glm::mat4 getModelMatrix() const;
-
-    void setRotation(glm::vec3 eulerAngles);
-    glm::vec3 getPos() const;
-    void setPos(glm::vec3 pos);
-
+    void updateModelMatrix();
 
 private:
-    void updateModelMatrix();
+
 
 };
 

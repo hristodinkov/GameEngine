@@ -9,6 +9,7 @@
 #include <algorithm>
 #include <vcruntime_startup.h>
 
+
 #include "MyClasses/Camera.h"
 #include "core/mesh.h"
 #include "core/assimpLoader.h"
@@ -17,7 +18,7 @@
 #include "MyClasses/Rotate.h"
 #include "MyClasses/Scene.h"
 #include "MyClasses/SceneManager.h"
-#include "MyClasses/SinMovement.h"
+
 #include "MyClasses/Style.h"
 
 #include "MyClasses/CollisionSystem/BenchmarkRunner.h"
@@ -27,11 +28,6 @@
 //#define MAC_CLION
 #define VSTUDIO
 
-#ifdef MAC_CLION
-#include "imgui.h"
-#include "backends/imgui_impl_glfw.h"
-#include "backends/imgui_impl_opengl3.h"
-#endif
 
 #ifdef VSTUDIO
 // Note: install imgui with:
@@ -57,6 +53,11 @@ int current = 0;
 //VP
 glm::mat4 view ;
 glm::mat4 projection;
+
+//excel
+bool showFileLockedPopup = false;
+std::string lockedFilename;
+
 void myStyle() {
     style.SetupImGuiStyle();
 }
@@ -79,6 +80,12 @@ void framebufferSizeCallback(GLFWwindow *window,
     if (glfwRawMouseMotionSupported())
         glfwSetInputMode(window, GLFW_RAW_MOUSE_MOTION, GLFW_TRUE);
 }
+
+bool isFileLocked(const std::string& filename) {
+    std::ofstream file(filename, std::ios::app);
+    return !file.is_open();
+}
+
 
 //RawEngine old methods
 
@@ -250,14 +257,14 @@ int main() {
 
     auto cube1 = scene1->addObject(std::make_shared<GameObject>("Cube1"));
     cube1->model = cubeModel;
-    cube1->translate(glm::vec3(-2.0f, 0.0f, 0.0f));
+    cube1->setPos(glm::vec3(-2.0f, 0.0f, 0.0f));
     //cube1->rotate(glm::vec3(1.0f, 0.0f, 0.0f),90);
     cube1->collider = std::make_shared<ConvexCollider>(cube1->model->getAllVertices(),cube1->model->getAllIndices(),cube1->getWorldTransform());
 
 
     auto cube2 = scene1->addObject(std::make_shared<GameObject>("Cube2"));
     cube2->model = cubeModel;
-    cube2->translate(glm::vec3(2.0f, 0.0f, 0.0f));
+    cube2->setPos(glm::vec3(2.0f, 0.0f, 0.0f));
     cube2->collider = std::make_shared<ConvexCollider>(cube2->model->getAllVertices(),cube2->model->getAllIndices(),cube2->getWorldTransform());
 
     //std::shared_ptr<LightObj> mainLight = nullptr;
@@ -274,7 +281,7 @@ int main() {
     auto carSharedptr = std::make_shared<GameObject>("Car");
     auto car = scene2->addObject(carSharedptr);
     car->model = core::AssimpLoader::loadModel("models/car.obj");
-    car->translate(glm::vec3(2.0f, 0.0f, 0.0f));
+    //car->translate(glm::vec3(2.0f, 0.0f, 0.0f));
     //car->scale(glm::vec3(0.01f, 0.01f, 0.01f));
     car->addBehavior(std::make_shared<Rotate>(
         glm::vec3(1, 0, 0), 1
@@ -283,8 +290,8 @@ int main() {
     auto quadSharedPtr = std::make_shared<GameObject>("Quad");
     auto quad2 = scene2->addObject(quadSharedPtr);
     quad2->model = core::AssimpLoader::loadModel("models/plane.obj");
-    quad2->rotate(glm::vec3(1,0,0),glm::radians(90.0f));
-    quad2->translate(glm::vec3(-2.5f, 0.0f, 0.0f));
+    //quad2->rotate(glm::vec3(1,0,0),glm::radians(90.0f));
+    //quad2->translate(glm::vec3(-2.5f, 0.0f, 0.0f));
 
 
     // auto carSharedptr2 = std::make_shared<GameObject>("Car");
@@ -309,7 +316,7 @@ int main() {
 
 
 
-    camera.translate(glm::vec3(0.0f, 0.0f, 20.0f));
+    camera.transform.setPos(glm::vec3(0.0f, 0.0f, 20.0f));
     //camera.rotate(glm::vec3(1,0,0), -10.0f * 3.1415f / 180);
     camera.speed = 0.02f;
 
@@ -457,15 +464,15 @@ int main() {
         if (ImGui::Begin("Cube Controls"))
         {
             ImGui::Text("Move Cube 1");
-            if (ImGui::SliderFloat3("Cube1 Pos", glm::value_ptr(cube1->position), -10.0f, 10.0f))
-                cube1->setPos(cube1->position);
+            if (ImGui::SliderFloat3("Cube1 Pos", glm::value_ptr(cube1->transform.position), -10.0f, 10.0f))
+                cube1->setPos(cube1->transform.position);
 
 
             ImGui::Separator();
 
             ImGui::Text("Move Cube 2");
-            if (ImGui::SliderFloat3("Cube2 Pos", glm::value_ptr(cube2->position), -10.0f, 10.0f))
-                cube2->setPos(cube2->position);
+            if (ImGui::SliderFloat3("Cube2 Pos", glm::value_ptr(cube2->transform.position), -10.0f, 10.0f))
+                cube2->setPos(cube1->transform.position);
         }
         ImGui::End();
 
@@ -490,15 +497,38 @@ int main() {
                 sceneManager.spawnCubesInScene(cfg.objectCount,cfg.randomSeed);
             }
             if (ImGui::Button("Run test")) {
-                BenchmarkRunner runner(sceneManager, window, cubeModel);
-                auto result = runner.run(cfg);
+                std::string filename = std::string("test_") + bmLabel + ".xls";
+                if (isFileLocked(filename)) {
+                    lockedFilename = filename;
+                    showFileLockedPopup = true;
 
-                std::string filename = std::string("benchmark_") + bmLabel + ".xls";
-                writeExcel(result,filename);
+                } else {
+                    BenchmarkRunner runner(sceneManager, window, cubeModel);
+                    auto result = runner.run(cfg);
+
+                    sceneManager.spawnCubesInScene(cfg.objectCount,cfg.randomSeed);
+                    writeExcel(result, filename);
+                }
+
             }
         }
         ImGui::End();
 
+        if (showFileLockedPopup) {
+            ImGui::OpenPopup("File Locked");
+        }
+
+        if (ImGui::BeginPopupModal("File Locked", NULL, ImGuiWindowFlags_AlwaysAutoResize)) {
+            ImGui::Text("The file '%s' is currently open in another program.", lockedFilename.c_str());
+            ImGui::Text("Please close it before running the test again or set a new name for the test.");
+
+            if (ImGui::Button("OK", ImVec2(120, 0))) {
+                showFileLockedPopup = false;
+                ImGui::CloseCurrentPopup();
+            }
+
+            ImGui::EndPopup();
+        }
 
 
         if (ImGui::Begin("Performance"))
@@ -526,7 +556,7 @@ int main() {
         sceneManager.update(deltaTime);
 
         projection = glm::perspective(glm::radians(camera.fov), aspect, 0.1f, 400.0f);
-        //pos, target,up
+
         view = glm::lookAt(camera.getPos(),camera.getPos() + camera.getForward(),camera.getUp());
 
         if (currentPostProcessingMode == 0) {
