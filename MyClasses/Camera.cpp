@@ -7,35 +7,39 @@
 
 #include <glm/ext/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
-void Camera::Move(GLFWwindow *window) {
+void Camera::Move(GLFWwindow* window) {
+    glm::vec3 forward = getForward();
+    glm::vec3 right   = getRight();
+    glm::vec3 up      = glm::vec3(0, 1, 0);
 
     if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS) {
-        this->transform.translate(glm::vec3(0,0,-speed));
+        transform.translate(forward * speed);
     }
     if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS) {
-        this->transform.translate(glm::vec3(0,0,speed));
+        transform.translate(-forward * speed);
     }
     if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS) {
-        this->transform.translate(glm::vec3(-speed,0,0));
+        transform.translate(-right * speed);
     }
     if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS) {
-        this->transform.translate(glm::vec3(speed,0,0));
+        transform.translate(right * speed);
     }
     if (glfwGetKey(window, GLFW_KEY_E) == GLFW_PRESS) {
-        this->transform.translate(glm::vec3(0,-speed,0));
+        transform.translate(-up * speed);
     }
     if (glfwGetKey(window, GLFW_KEY_Q) == GLFW_PRESS) {
-        this->transform.translate(glm::vec3(0,speed,0));
+        transform.translate(up * speed);
     }
     if (glfwGetKey(window, GLFW_KEY_Z) == GLFW_PRESS) {
-        fov -= fovSpeed * 0.01f; // decrease FOV to zoom in
+        fov -= fovSpeed * 0.01f;
         if (fov < 1.0f) fov = 1.0f;
     }
     if (glfwGetKey(window, GLFW_KEY_X) == GLFW_PRESS) {
-        fov += fovSpeed * 0.01f; // increase FOV to zoom out
+        fov += fovSpeed * 0.01f;
         if (fov > 120.0f) fov = 120.0f;
     }
 }
+
 void Camera::Rotate(GLFWwindow *window) {
     if (glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_RIGHT) == GLFW_PRESS) {
         double xpos, ypos;
@@ -93,6 +97,8 @@ glm::vec3 Camera::getForward() const {
 
     float yawRad   = glm::radians(yRotation);
     float pitchRad = glm::radians(xRotation);
+
+
 
     return glm::normalize(glm::vec3(
         cos(pitchRad) * sin(yawRad),

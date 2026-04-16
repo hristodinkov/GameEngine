@@ -13,8 +13,7 @@
 
 class Scene {
 private:
-    int satTestsThisFrame;
-    double satTimeThisFrame;
+
 public:
     std::vector<std::shared_ptr<GameObject>> objects;
 
@@ -23,10 +22,6 @@ public:
     void update(float deltaTime);
 
     void render(Shader& shader,const glm::mat4& projection,const glm::mat4& view);
-
-    int getSatTestsThisFrame();
-    double getSatTimeThisFrame();
-
 };
 
 #endif //RAWENGINE_SCENE_H

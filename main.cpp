@@ -5,8 +5,6 @@
 #include <glm/gtc/type_ptr.hpp>
 #include <fstream>
 #include <memory>
-#include <sstream>
-#include <algorithm>
 #include <vcruntime_startup.h>
 
 
@@ -21,8 +19,9 @@
 
 #include "MyClasses/Style.h"
 
-#include "MyClasses/CollisionSystem/BenchmarkRunner.h"
+//#include "MyClasses/CollisionSystem/BenchmarkRunner.h"
 #include "MyClasses/CollisionSystem/BenschmarkWriter.h"
+#include "MyClasses/CollisionSystem/SpatialHashGrid.h"
 
 
 //#define MAC_CLION
@@ -57,6 +56,11 @@ glm::mat4 projection;
 //excel
 bool showFileLockedPopup = false;
 std::string lockedFilename;
+//test colishion
+bool benchmarkRunning = false;
+double benchmarkStartTime = 0.0;
+BenchmarkResult benchmarkResult;
+BenchmarkConfig benchmarkConfig;
 
 void myStyle() {
     style.SetupImGuiStyle();
@@ -168,7 +172,302 @@ std::vector<GLuint> cubeIndices = {
     20,21,22, 22,23,20  // bottom
 };
 
+std::vector<Vertex> tetraVerts = {
+    // Base face (points downward)
+    Vertex({-1, 0, -1}, glm::vec3(0, -1, 0), {0,0}),
+    Vertex({ 1, 0, -1}, glm::vec3(0, -1, 0), {1,0}),
+    Vertex({ 0, 0,  1}, glm::vec3(0, -1, 0), {0.5f,1}),
 
+    // Side face 1
+    Vertex({-1, 0, -1}, glm::normalize(glm::vec3( 2, 1.5,  0)), {0,0}),
+    Vertex({ 1, 0, -1}, glm::normalize(glm::vec3( 2, 1.5,  0)), {1,0}),
+    Vertex({ 0, 1.5, 0}, glm::normalize(glm::vec3( 2, 1.5,  0)), {0.5f,1}),
+
+    // Side face 2
+    Vertex({ 1, 0, -1}, glm::normalize(glm::vec3(-2, 1.5,  2)), {0,0}),
+    Vertex({ 0, 0,  1}, glm::normalize(glm::vec3(-2, 1.5,  2)), {1,0}),
+    Vertex({ 0, 1.5, 0}, glm::normalize(glm::vec3(-2, 1.5,  2)), {0.5f,1}),
+
+    // Side face 3
+    Vertex({ 0, 0,  1}, glm::normalize(glm::vec3( 1, 1.5, -2)), {0,0}),
+    Vertex({-1, 0, -1}, glm::normalize(glm::vec3( 1, 1.5, -2)), {1,0}),
+    Vertex({ 0, 1.5, 0}, glm::normalize(glm::vec3( 1, 1.5, -2)), {0.5f,1}),
+};
+
+
+// std::vector<glm::vec3> tetraVerts = {
+//     { 1,  1,  1},
+//     {-1, -1,  1},
+//     {-1,  1, -1},
+//     { 1, -1, -1}
+// };
+//
+// std::vector<unsigned int> tetraIndices = {
+//     0,1,2,
+//     0,1,3,
+//     0,2,3,
+//     1,2,3
+// };
+
+
+
+std::vector<unsigned int> tetraIndices = {
+    0, 1, 2,
+    3, 4, 5,
+    6, 7, 8,
+    9,10,11
+};
+
+
+void drawLines(Shader lineShader, SceneManager sceneManager, std::shared_ptr<GameObject> cube1, GLuint debugVAO, GLuint debugVBO) {
+    glLineWidth(5.0f);
+    glDisable(GL_DEPTH_TEST);
+    auto verts = cube1->collider->getLineVertices();
+
+    lineShader.Activate();
+    lineShader.SetMat4Uniform("viewMatrix", view);
+    lineShader.SetMat4Uniform("projMatrix", projection);
+    lineShader.SetVec3Uniform("color", glm::vec3(0,1,0));
+
+    glBindVertexArray(debugVAO);
+    auto activeScene = sceneManager.getActiveScene();
+    for (auto& obj : activeScene->objects)
+    {
+        if (!obj->collider) continue;
+
+        auto verts = obj->collider->getLineVertices();
+
+        glBindBuffer(GL_ARRAY_BUFFER, debugVBO);
+        glBufferData(GL_ARRAY_BUFFER, verts.size() * sizeof(glm::vec3), verts.data(), GL_DYNAMIC_DRAW);
+
+        glDrawArrays(GL_LINES, 0, verts.size());
+    }
+
+    glBindVertexArray(0);
+    glEnable(GL_DEPTH_TEST);
+}
+
+void postProcessing(Shader invertColorsShader, Shader greyShader, Shader edgeDetectionShader, Shader pixelizationShader, float pixels, float kernelCenterValueMatrix, unsigned int fbTexture, unsigned int quadVAO, int currentPostProcessingMode) {
+    if (currentPostProcessingMode != 0) {
+        glDisable(GL_DEPTH_TEST);
+        glDisable(GL_CULL_FACE);
+
+        glViewport(0, 0, g_width, g_height);
+        glClear(GL_COLOR_BUFFER_BIT);
+
+        Shader* activeShader = nullptr;
+
+        if (currentPostProcessingMode == 1) {
+            activeShader = &greyShader;
+        }
+        else if (currentPostProcessingMode == 2) {
+            activeShader = &invertColorsShader;
+        }
+        else if (currentPostProcessingMode == 3) {
+            activeShader = &edgeDetectionShader;
+        }
+        else if (currentPostProcessingMode == 4) {
+            activeShader = &pixelizationShader;
+
+        }
+
+        if (activeShader != nullptr) {
+            activeShader->Activate();
+            activeShader->SetIntUniform("screenTexture", 0);
+            activeShader->SetFloatUniform("Pixels",pixels);
+            activeShader->SetFloatUniform("kernelCenterValue",kernelCenterValueMatrix);
+
+            glActiveTexture(GL_TEXTURE0);
+            glBindTexture(GL_TEXTURE_2D, fbTexture);
+
+            glBindVertexArray(quadVAO);
+            glDrawArrays(GL_TRIANGLES, 0, 6);
+            glBindVertexArray(0);
+        }
+
+        glEnable(GL_CULL_FACE);
+    }
+}
+
+void im_gui(GLFWwindow *window, core::Model cubeModel, SceneManager sceneManager, std::shared_ptr<GameObject> cube1, std::shared_ptr<GameObject> cube2, float deltaTime, float fps, double averageTimePerSAT, BenchmarkConfig cfg, bool &showGrid) {
+    ImGui_ImplOpenGL3_NewFrame();
+    ImGui_ImplGlfw_NewFrame();
+    ImGui::NewFrame();
+    myStyle();
+
+    // if (ImGui::Begin("Let it be light",&IMGuiOpened)) {
+    //     //ImGui::SliderFloat3("Light Position", glm::value_ptr(guiLightPos), 0.0f, 10.0f);
+    //    // ImGui::ColorEdit3("Light Color", glm::value_ptr(guiLightColor));
+    //     // ImGui::SliderFloat("Shininess", &guiShininess, 1.0f, 512.0f);
+    //     // ImGui::SliderFloat("Specular Strength", &guiSpecular, 0.0f, 256.0f);
+    //     // ImGui::SliderFloat("Ambient Strength", &guiAmbient, 0.0f, 1.0f);
+    //     // ImGui::SliderFloat("Light Radis", &guiLightRadius, 0.0f, 100.0f);
+    //
+    //     ImGui::Combo("Post Process", &currentPostProcessingMode, "None\0Grayscale\0Invert\0EdgeDetection\0Pixalization");
+    //     if (currentPostProcessingMode==3) {
+    //         ImGui::SliderFloat("Kernel Central Value",&kernelCenterValueMatrix,0,-20);
+    //     }
+    //     if (currentPostProcessingMode == 4) {
+    //         ImGui::SliderFloat("Pixels",&pixels,1,1024);
+    //     }
+    // } ImGui::End();
+
+    // if (ImGui::Begin("MoveCar",&IMGuiOpenedCarWindow)) {
+    //     if (ImGui::SliderFloat3("Position",glm::value_ptr(car2->position),-80.0f,100.0f)) {
+    //         car2->setPos(car2->position);
+    //     }
+    // } ImGui::End();
+
+    if (sceneManager.getSatCount()>0) {
+        averageTimePerSAT = sceneManager.getSatTime()/sceneManager.getSatCount();
+    }
+    else {
+        averageTimePerSAT = 0;
+    }
+    if (ImGui::Begin("Cube Controls"))
+    {
+        ImGui::Text("Move Cube 1");
+        if (ImGui::SliderFloat3("Cube1 Pos", glm::value_ptr(cube1->transform.position), -10.0f, 10.0f))
+            cube1->setPos(cube1->transform.position);
+
+
+        ImGui::Separator();
+
+        ImGui::Text("Move Cube 2");
+        if (ImGui::SliderFloat3("Cube2 Pos", glm::value_ptr(cube2->transform.position), -10.0f, 10.0f))
+            cube2->setPos(cube2->transform.position);
+    }
+    ImGui::End();
+
+    static int bmObjectCount = 10;
+    static float bmDuration = 10.0f;
+    static bool bmUseGrid = false;
+    static char bmLabel[64] = "baseline";
+
+    if (ImGui::Begin("Benchmark")) {
+        ImGui::InputInt("Object Count", &bmObjectCount);
+        ImGui::InputFloat("Duration (s)", &bmDuration);
+        ImGui::Checkbox("Use Grid", &bmUseGrid);
+        ImGui::Checkbox("Show Spatial Grid", &showGrid);
+        ImGui::InputText("Label", bmLabel, sizeof(bmLabel));
+
+        if (ImGui::Button("Spawn Objects")) {
+
+            cfg.objectCount = bmObjectCount;
+            cfg.testDurationSeconds = bmDuration;
+            cfg.useGrid = bmUseGrid;
+            cfg.label = bmLabel;
+            cfg.randomSeed = 47;
+            sceneManager.spawnCubesInScene(cfg.objectCount,cfg.randomSeed);
+        }
+        if (ImGui::Button("Run test")) {
+            std::string filename = std::string("test_") + bmLabel + ".xls";
+            if (isFileLocked(filename)) {
+                lockedFilename = filename;
+                showFileLockedPopup = true;
+
+            } else {
+
+                benchmarkRunning = true;
+                benchmarkStartTime = glfwGetTime();
+                benchmarkConfig = cfg;
+
+                benchmarkResult = BenchmarkResult();
+                benchmarkResult.config = cfg;
+
+                sceneManager.resetSatStats();
+                // BenchmarkRunner runner(sceneManager, window, cubeModel);
+                // auto result = runner.run(cfg);
+                //
+                // sceneManager.spawnCubesInScene(cfg.objectCount,cfg.randomSeed);
+                // writeExcel(result, filename);
+
+            }
+
+        }
+    }
+    ImGui::End();
+
+    if (showFileLockedPopup) {
+        ImGui::OpenPopup("File Locked");
+    }
+
+    if (ImGui::BeginPopupModal("File Locked", NULL, ImGuiWindowFlags_AlwaysAutoResize)) {
+        ImGui::Text("The file '%s' is currently open in another program.", lockedFilename.c_str());
+        ImGui::Text("Please close it before running the test again or set a new name for the test.");
+
+        if (ImGui::Button("OK", ImVec2(120, 0))) {
+            showFileLockedPopup = false;
+            ImGui::CloseCurrentPopup();
+        }
+
+        ImGui::EndPopup();
+    }
+
+
+    if (ImGui::Begin("Performance"))
+    {
+        ImGui::Text("FPS: %.1f", fps);
+        ImGui::Text("Frame Time: %.3f ms", deltaTime * 1000.0f);
+
+        ImGui::Separator();
+        ImGui::Text("SAT Tests This Frame: %d", sceneManager.getSatCount());
+        ImGui::Text("SAT Time: %.6f s", sceneManager.getSatTime());
+        ImGui::Text("Avg Time per SAT: %.9f s", averageTimePerSAT);
+
+    }
+    ImGui::End();
+
+    processInput(window);
+}
+
+void set_modelShader(Shader modelShader, core::Texture cmgtGatoTexture, /*glm::vec3 guiLightPos*/ float guiShininess, float guiSpecular, float guiAmbient, float guiLightRadius) {
+    modelShader.Activate();
+    //modelShader.SetVec3Uniform("lightPos", guiLightPos);
+    modelShader.SetVec3Uniform("cameraPos", camera.getPos());
+    //modelShader.SetVec3Uniform("lightColor", guiLightColor);
+    modelShader.SetFloatUniform("lightRadius", guiLightRadius);
+    modelShader.SetFloatUniform("ambientStrength", guiAmbient);
+    modelShader.SetFloatUniform("specularStrength", guiSpecular);
+    modelShader.SetFloatUniform("shininess", guiShininess);
+    modelShader.SetMat4Uniform("viewMatrix", view);
+    modelShader.SetMat4Uniform("projMatrix", projection);
+    modelShader.BindTexture("textures/CMGaTo_crop.jpg", cmgtGatoTexture.getId(), 0);
+}
+
+void try_run_benchmark_test(SceneManager sceneManager, float deltaTime, float fps) {
+    if (benchmarkRunning)
+    {
+        double now = glfwGetTime();
+        double elapsed = now - benchmarkStartTime;
+
+        if (elapsed >= benchmarkConfig.testDurationSeconds)
+        {
+            // Benchmark finished
+            benchmarkRunning = false;
+
+            std::string filename = "test_" + benchmarkConfig.label + ".xls";
+            writeExcel(benchmarkResult, filename);
+
+            // Respawn objects for normal mode
+            sceneManager.spawnCubesInScene(
+                benchmarkConfig.objectCount,
+                benchmarkConfig.randomSeed
+            );
+        }
+        else
+        {
+            // Collect sample
+            BenchmarkSample s;
+            s.time = float(elapsed);
+            s.fps = fps;
+            s.frameTime = deltaTime;
+            s.satTests = sceneManager.getSatCount();
+            s.satTime = sceneManager.getSatTime();
+            benchmarkResult.samples.push_back(s);
+        }
+    }
+}
 
 int main() {
     glfwInit();
@@ -233,7 +532,10 @@ int main() {
 
     core::Mesh cubeMesh (cubeVertices, cubeIndices);
     core::Model cubeModel({cubeMesh});
+    core::Mesh tetraMesh(tetraVerts,tetraIndices);
+    core::Model tetraModel({tetraMesh});
     SceneManager sceneManager(cubeModel);
+    SpatialHashGrid grid;
 
     // auto scene1 = sceneManager.createScene("Cube");
     // auto monkey = std::make_shared<GameObject>("Strange Monkey");
@@ -256,14 +558,14 @@ int main() {
 
 
     auto cube1 = scene1->addObject(std::make_shared<GameObject>("Cube1"));
-    cube1->model = cubeModel;
+    cube1->model = tetraModel;
     cube1->setPos(glm::vec3(-2.0f, 0.0f, 0.0f));
     //cube1->rotate(glm::vec3(1.0f, 0.0f, 0.0f),90);
     cube1->collider = std::make_shared<ConvexCollider>(cube1->model->getAllVertices(),cube1->model->getAllIndices(),cube1->getWorldTransform());
 
 
     auto cube2 = scene1->addObject(std::make_shared<GameObject>("Cube2"));
-    cube2->model = cubeModel;
+    cube2->model = tetraModel;
     cube2->setPos(glm::vec3(2.0f, 0.0f, 0.0f));
     cube2->collider = std::make_shared<ConvexCollider>(cube2->model->getAllVertices(),cube2->model->getAllIndices(),cube2->getWorldTransform());
 
@@ -316,9 +618,9 @@ int main() {
 
 
 
-    camera.transform.setPos(glm::vec3(0.0f, 0.0f, 20.0f));
+    camera.transform.setPos(glm::vec3(0.0f, 0.0f, 10.0f));
     //camera.rotate(glm::vec3(1,0,0), -10.0f * 3.1415f / 180);
-    camera.speed = 0.02f;
+    camera.speed = 0.002f;
 
     double currentTime = glfwGetTime();
     double finishFrameTime = 0.0;
@@ -330,10 +632,11 @@ int main() {
     BenchmarkConfig cfg;
     static int objectCountInput = 10;
     static bool objectsSpawned = false;
+    static bool showGrid = false;
 
     float rotationStrength = 100.0f;
 
-    glm::vec3 guiLightPos;
+    //glm::vec3 guiLightPos;
     // if (mainLight) {
     //     guiLightPos = mainLight->getPos();
     // } else {
@@ -371,7 +674,6 @@ int main() {
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
     glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, fbTexture, 0);
-
 
 
     unsigned int quadVAO, quadVBO;
@@ -419,134 +721,13 @@ int main() {
 
     glBindVertexArray(0);
 
-
-
     float aspect = static_cast<float>(g_width) / g_height;
 
     int currentPostProcessingMode = 0;
 
     while (!glfwWindowShouldClose(window))
     {
-        ImGui_ImplOpenGL3_NewFrame();
-        ImGui_ImplGlfw_NewFrame();
-        ImGui::NewFrame();
-        myStyle();
-
-        // if (ImGui::Begin("Let it be light",&IMGuiOpened)) {
-        //     //ImGui::SliderFloat3("Light Position", glm::value_ptr(guiLightPos), 0.0f, 10.0f);
-        //    // ImGui::ColorEdit3("Light Color", glm::value_ptr(guiLightColor));
-        //     // ImGui::SliderFloat("Shininess", &guiShininess, 1.0f, 512.0f);
-        //     // ImGui::SliderFloat("Specular Strength", &guiSpecular, 0.0f, 256.0f);
-        //     // ImGui::SliderFloat("Ambient Strength", &guiAmbient, 0.0f, 1.0f);
-        //     // ImGui::SliderFloat("Light Radis", &guiLightRadius, 0.0f, 100.0f);
-        //
-        //     ImGui::Combo("Post Process", &currentPostProcessingMode, "None\0Grayscale\0Invert\0EdgeDetection\0Pixalization");
-        //     if (currentPostProcessingMode==3) {
-        //         ImGui::SliderFloat("Kernel Central Value",&kernelCenterValueMatrix,0,-20);
-        //     }
-        //     if (currentPostProcessingMode == 4) {
-        //         ImGui::SliderFloat("Pixels",&pixels,1,1024);
-        //     }
-        // } ImGui::End();
-
-        // if (ImGui::Begin("MoveCar",&IMGuiOpenedCarWindow)) {
-        //     if (ImGui::SliderFloat3("Position",glm::value_ptr(car2->position),-80.0f,100.0f)) {
-        //         car2->setPos(car2->position);
-        //     }
-        // } ImGui::End();
-
-        if (sceneManager.getSatCount()>0) {
-            averageTimePerSAT = sceneManager.getSatTime()/sceneManager.getSatCount();
-        }
-        else {
-            averageTimePerSAT = 0;
-        }
-        if (ImGui::Begin("Cube Controls"))
-        {
-            ImGui::Text("Move Cube 1");
-            if (ImGui::SliderFloat3("Cube1 Pos", glm::value_ptr(cube1->transform.position), -10.0f, 10.0f))
-                cube1->setPos(cube1->transform.position);
-
-
-            ImGui::Separator();
-
-            ImGui::Text("Move Cube 2");
-            if (ImGui::SliderFloat3("Cube2 Pos", glm::value_ptr(cube2->transform.position), -10.0f, 10.0f))
-                cube2->setPos(cube1->transform.position);
-        }
-        ImGui::End();
-
-        static int bmObjectCount = 10;
-        static float bmDuration = 10.0f;
-        static bool bmUseGrid = false;
-        static char bmLabel[64] = "baseline";
-
-        if (ImGui::Begin("Benchmark")) {
-            ImGui::InputInt("Object Count", &bmObjectCount);
-            ImGui::InputFloat("Duration (s)", &bmDuration);
-            ImGui::Checkbox("Use Grid", &bmUseGrid);
-            ImGui::InputText("Label", bmLabel, sizeof(bmLabel));
-
-            if (ImGui::Button("Spawn Objects")) {
-
-                cfg.objectCount = bmObjectCount;
-                cfg.testDurationSeconds = bmDuration;
-                cfg.useGrid = bmUseGrid;
-                cfg.label = bmLabel;
-                cfg.randomSeed = 47;
-                sceneManager.spawnCubesInScene(cfg.objectCount,cfg.randomSeed);
-            }
-            if (ImGui::Button("Run test")) {
-                std::string filename = std::string("test_") + bmLabel + ".xls";
-                if (isFileLocked(filename)) {
-                    lockedFilename = filename;
-                    showFileLockedPopup = true;
-
-                } else {
-                    BenchmarkRunner runner(sceneManager, window, cubeModel);
-                    auto result = runner.run(cfg);
-
-                    sceneManager.spawnCubesInScene(cfg.objectCount,cfg.randomSeed);
-                    writeExcel(result, filename);
-                }
-
-            }
-        }
-        ImGui::End();
-
-        if (showFileLockedPopup) {
-            ImGui::OpenPopup("File Locked");
-        }
-
-        if (ImGui::BeginPopupModal("File Locked", NULL, ImGuiWindowFlags_AlwaysAutoResize)) {
-            ImGui::Text("The file '%s' is currently open in another program.", lockedFilename.c_str());
-            ImGui::Text("Please close it before running the test again or set a new name for the test.");
-
-            if (ImGui::Button("OK", ImVec2(120, 0))) {
-                showFileLockedPopup = false;
-                ImGui::CloseCurrentPopup();
-            }
-
-            ImGui::EndPopup();
-        }
-
-
-        if (ImGui::Begin("Performance"))
-        {
-            ImGui::Text("FPS: %.1f", fps);
-            ImGui::Text("Frame Time: %.3f ms", deltaTime * 1000.0f);
-
-            ImGui::Separator();
-            ImGui::Text("SAT Tests This Frame: %d", sceneManager.getSatCount());
-            ImGui::Text("SAT Time: %.6f s", sceneManager.getSatTime());
-            ImGui::Text("Avg Time per SAT: %.9f s", averageTimePerSAT);
-
-        }
-        ImGui::End();
-
-
-        processInput(window);
-
+        im_gui(window, cubeModel, sceneManager, cube1, cube2, deltaTime, fps, averageTimePerSAT, cfg, showGrid);
 
         if (glfwGetKey(window, GLFW_KEY_1) == GLFW_PRESS)
             sceneManager.setActiveScene("Monkey");
@@ -555,111 +736,57 @@ int main() {
 
         sceneManager.update(deltaTime);
 
-        projection = glm::perspective(glm::radians(camera.fov), aspect, 0.1f, 400.0f);
+        auto activeScene = sceneManager.getActiveScene();
 
+        std::vector<std::pair<GameObject*, GameObject*>> pairs;
+
+
+        if (showGrid || (benchmarkRunning && benchmarkConfig.useGrid)) {
+            grid.buildGrid(activeScene->objects);
+            pairs = grid.computePairs();
+        } else {
+            pairs = sceneManager.computeBruteForcePairs();
+        }
+
+        sceneManager.resetSatStats();
+
+        for (auto& [A, B] : pairs) {
+            sceneManager.runSAT(A, B);
+        }
+
+        if (showGrid) {
+            grid.drawDebug(debugVAO, debugVBO, lineShader);
+        }
+
+        try_run_benchmark_test(sceneManager, deltaTime, fps);
+
+
+        projection = glm::perspective(glm::radians(camera.fov), aspect, 0.1f, 400.0f);
         view = glm::lookAt(camera.getPos(),camera.getPos() + camera.getForward(),camera.getUp());
 
         if (currentPostProcessingMode == 0) {
-            // NONE
             glBindFramebuffer(GL_FRAMEBUFFER, 0);
         } else {
-            // Any effect
             glBindFramebuffer(GL_FRAMEBUFFER, framebuffer);
         }
 
         glViewport(0, 0, g_width, g_height);
         glEnable(GL_DEPTH_TEST);
         glDepthMask(GL_TRUE);
-        glDepthFunc(GL_LESS);//the closer the object, the more fragments it draws
+        glDepthFunc(GL_LESS);
 
         glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-        // grayShader.Activate();
-        // grayShader.SetMat4Uniform("viewMatrix", view);
-        // grayShader.SetMat4Uniform("projMatrix", projection);
 
-
-        modelShader.Activate();
-        modelShader.SetVec3Uniform("lightPos", guiLightPos);
-        modelShader.SetVec3Uniform("cameraPos", camera.getPos());
-        //modelShader.SetVec3Uniform("lightColor", guiLightColor);
-         modelShader.SetFloatUniform("lightRadius", guiLightRadius);
-         modelShader.SetFloatUniform("ambientStrength", guiAmbient);
-         modelShader.SetFloatUniform("specularStrength", guiSpecular);
-         modelShader.SetFloatUniform("shininess", guiShininess);
-         modelShader.SetMat4Uniform("viewMatrix", view);
-         modelShader.SetMat4Uniform("projMatrix", projection);
-         modelShader.BindTexture("textures/CMGaTo_crop.jpg", cmgtGatoTexture.getId(), 0);
+        set_modelShader(modelShader, cmgtGatoTexture, guiShininess, guiSpecular, guiAmbient, guiLightRadius);
 
         sceneManager.render(modelShader, projection, view);
 
+        drawLines(lineShader, sceneManager, cube1, debugVAO, debugVBO);
 
-
-        glLineWidth(5.0f);
-        glDisable(GL_DEPTH_TEST);
-        auto verts = cube1->collider->getLineVertices();
-
-        lineShader.Activate();
-        lineShader.SetMat4Uniform("viewMatrix", view);
-        lineShader.SetMat4Uniform("projMatrix", projection);
-        lineShader.SetVec3Uniform("color", glm::vec3(0,1,0));
-
-        glBindVertexArray(debugVAO);
-        auto activeScene = sceneManager.getActiveScene();
-        for (auto& obj : activeScene->objects)
-        {
-            if (!obj->collider) continue;
-
-            auto verts = obj->collider->getLineVertices();
-
-            glBindBuffer(GL_ARRAY_BUFFER, debugVBO);
-            glBufferData(GL_ARRAY_BUFFER, verts.size() * sizeof(glm::vec3), verts.data(), GL_DYNAMIC_DRAW);
-
-            glDrawArrays(GL_LINES, 0, verts.size());
-        }
-
-        glBindVertexArray(0);
-        glEnable(GL_DEPTH_TEST);
-            if (currentPostProcessingMode != 0) {
-                glDisable(GL_DEPTH_TEST);
-                glDisable(GL_CULL_FACE); //triangles that does not face the camera
-
-                glViewport(0, 0, g_width, g_height);
-                glClear(GL_COLOR_BUFFER_BIT);
-
-                Shader* activeShader = nullptr;
-
-                if (currentPostProcessingMode == 1) {
-                    activeShader = &greyShader;
-                }
-                else if (currentPostProcessingMode == 2) {
-                    activeShader = &invertColorsShader;
-                }
-                else if (currentPostProcessingMode == 3) {
-                    activeShader = &edgeDetectionShader;
-                }
-                else if (currentPostProcessingMode == 4) {
-                    activeShader = &pixelizationShader;
-
-                }
-
-                if (activeShader != nullptr) {
-                    activeShader->Activate();
-                    activeShader->SetIntUniform("screenTexture", 0);
-                    activeShader->SetFloatUniform("Pixels",pixels);
-                    activeShader->SetFloatUniform("kernelCenterValue",kernelCenterValueMatrix);
-
-                    glActiveTexture(GL_TEXTURE0);
-                    glBindTexture(GL_TEXTURE_2D, fbTexture);
-
-                    glBindVertexArray(quadVAO);
-                    glDrawArrays(GL_TRIANGLES, 0, 6);
-                    glBindVertexArray(0);
-                }
-
-                glEnable(GL_CULL_FACE);
-        }
+        postProcessing(invertColorsShader, greyShader, edgeDetectionShader, pixelizationShader,
+            pixels, kernelCenterValueMatrix,fbTexture, quadVAO, currentPostProcessingMode);
 
         ImGui::Render();
         ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
@@ -669,7 +796,7 @@ int main() {
         finishFrameTime = glfwGetTime();
         deltaTime = static_cast<float>(finishFrameTime - currentTime);
         currentTime = finishFrameTime;
-        // FPS calculation
+
         fpsFrames++;
         fpsTimer += deltaTime;
 

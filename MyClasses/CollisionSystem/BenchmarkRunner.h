@@ -10,6 +10,7 @@
 
 #include "../MyClasses/SceneManager.h"
 #include "Benchmark.h"
+#include "SpatialHashGrid.h"
 
 struct GLFWwindow;
 
@@ -22,6 +23,7 @@ class BenchmarkRunner {
     SceneManager &sceneManager;
     GLFWwindow* window;
     core::Model& cubeModel;
+    SpatialHashGrid grid;
 
     void setupScene(const BenchmarkConfig& config);
 };

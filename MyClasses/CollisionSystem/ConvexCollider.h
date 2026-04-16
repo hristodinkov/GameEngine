@@ -26,9 +26,6 @@ public:
     GLuint lineVAO = 0;
     GLuint lineVBO = 0;
 
-
-    glm::vec3 aabbMin ;
-    glm::vec3 aabbMax;
     std::vector<std::pair<unsigned int, unsigned int>> edgeIndexPairs;
     std::vector<std::pair<unsigned int, unsigned int>> allEdges;
 

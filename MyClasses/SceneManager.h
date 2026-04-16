@@ -15,6 +15,8 @@ private:
     std::unordered_map<std::string, std::shared_ptr<Scene>> scenesDictionary;
     std::shared_ptr<Scene> currentScene = nullptr;
     core::Model model;
+    int satTestsThisFrame;
+    double satTimeThisFrame;
 public:
 
     SceneManager(core::Model);
@@ -24,9 +26,12 @@ public:
 
     int getSatCount() const;
     double getSatTime() const;
+    void resetSatStats();
 
     void spawnCubesInScene(int count,int seed);
     void clearObjects();
+    std::vector<std::pair<GameObject*,GameObject*>> computeBruteForcePairs();
+    void runSAT(GameObject* A,GameObject*B);
 
     void update(float deltaTime);
     void render(Shader& shader,const glm::mat4& projection,const glm::mat4& view);

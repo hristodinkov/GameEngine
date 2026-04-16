@@ -50,6 +50,8 @@ set(IMGUI_SOURCES
         MyClasses/Random.h
         MyClasses/SinMovement.cpp
         MyClasses/SinMovement.h
+        MyClasses/CollisionSystem/SpatialHashGrid.cpp
+        MyClasses/CollisionSystem/SpatialHashGrid.h
 )
 
 add_executable(RawEngine main.cpp

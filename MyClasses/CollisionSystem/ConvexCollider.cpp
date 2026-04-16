@@ -11,8 +11,6 @@
 #include <set>
 #include <glad/glad.h>
 
-
-
 ConvexCollider::ConvexCollider(const std::vector<glm::vec3> &vertices, const std::vector<unsigned int>& indices, const glm::mat4 modelMatrix) {
 
     glGenVertexArrays(1, &lineVAO);
@@ -79,14 +77,10 @@ ConvexCollider::ConvexCollider(const std::vector<glm::vec3> &vertices, const std
 };
 
 void ConvexCollider::update(const glm::mat4 &worldTransform) {
-    aabbMin = glm::vec3(FLT_MAX);
-    aabbMax = glm::vec3(-FLT_MAX);
+
     for (size_t i = 0; i < localVertices.size(); i ++) {
         glm::vec4 world = worldTransform * glm::vec4(localVertices[i], 1.0f);
         worldVertices[i] = glm::vec3(world);
-
-        aabbMin = glm::min(aabbMin, worldVertices[i]);
-        aabbMax = glm::max(aabbMax, worldVertices[i]);
     }
 }
 

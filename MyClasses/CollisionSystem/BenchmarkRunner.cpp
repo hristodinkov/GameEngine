@@ -73,6 +73,26 @@ BenchmarkResult BenchmarkRunner::run(const BenchmarkConfig& config) {
 
         sceneManager.update(deltaTime);
 
+        auto activeScene = sceneManager.getActiveScene();
+        std::vector<std::pair<GameObject*, GameObject*>> pairs;
+
+        // Use grid or brute force depending on config
+        if (config.useGrid) {
+            grid.buildGrid(activeScene->objects);
+            pairs = grid.computePairs();
+        } else {
+            pairs = sceneManager.computeBruteForcePairs();
+        }
+
+        // Reset SAT stats for this frame
+        sceneManager.resetSatStats();
+
+        // Run SAT on all pairs
+        for (auto& [A, B] : pairs) {
+            sceneManager.runSAT(A, B);
+        }
+
+
         if(deltaTime > 0.0f) {
             fps = 1.0f / deltaTime;
         }else {

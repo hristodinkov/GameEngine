@@ -8,6 +8,7 @@
 
 #include "Rotate.h"
 #include "SinMovement.h"
+#include "CollisionSystem/Collision.h"
 
 SceneManager::SceneManager(core::Model cube) : model(cube) {}
 
@@ -47,12 +48,17 @@ void SceneManager::render(Shader& shader,const glm::mat4& projection,const glm::
 }
 
 int SceneManager::getSatCount() const {
-    return currentScene->getSatTestsThisFrame();
+    return satTestsThisFrame;
 }
 
 double SceneManager::getSatTime() const {
-    return currentScene->getSatTimeThisFrame();
+    return satTimeThisFrame;
 }
+void SceneManager::resetSatStats() {
+    satTestsThisFrame = 0;
+    satTimeThisFrame = 0.0f;
+}
+
 void SceneManager::spawnCubesInScene(int count,int seed) {
     clearObjects();
     auto scene = getActiveScene();
@@ -82,5 +88,39 @@ void SceneManager::spawnCubesInScene(int count,int seed) {
 void SceneManager::clearObjects() {
     getActiveScene()->objects.clear();
 }
+
+std::vector<std::pair<GameObject *, GameObject *> > SceneManager::computeBruteForcePairs() {
+    std::vector<std::pair<GameObject*, GameObject*>> pairs;
+
+    auto& objs = currentScene->objects;
+
+    for (size_t i = 0; i < objs.size(); i++) {
+        for (size_t j = i + 1; j < objs.size(); j++) {
+            pairs.emplace_back(objs[i].get(), objs[j].get());
+        }
+    }
+
+    return pairs;
+}
+
+void SceneManager::runSAT(GameObject *A, GameObject *B) {
+    auto start = std::chrono::high_resolution_clock::now();
+
+    Collision col;
+    bool hit = col.SATCollision(*A->collider, *B->collider);
+
+    auto end = std::chrono::high_resolution_clock::now();
+    double deltaTime = std::chrono::duration<double>(end - start).count();
+
+    satTestsThisFrame++;
+    satTimeThisFrame += deltaTime;
+
+    if (hit) {
+        A->isColliding = true;
+        B->isColliding = true;
+    }
+}
+
+
 
 
