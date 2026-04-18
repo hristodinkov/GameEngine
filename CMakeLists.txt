@@ -42,8 +42,6 @@ set(IMGUI_SOURCES
         MyClasses/CollisionSystem/ConvexCollider.h
         MyClasses/CollisionSystem/Collision.cpp
         MyClasses/CollisionSystem/Benchmark.h
-        MyClasses/CollisionSystem/BenchmarkRunner.cpp
-        MyClasses/CollisionSystem/BenchmarkRunner.h
         MyClasses/CollisionSystem/BenschmarkWriter.cpp
         MyClasses/CollisionSystem/BenschmarkWriter.h
         MyClasses/Random.cpp
@@ -52,6 +50,8 @@ set(IMGUI_SOURCES
         MyClasses/SinMovement.h
         MyClasses/CollisionSystem/SpatialHashGrid.cpp
         MyClasses/CollisionSystem/SpatialHashGrid.h
+        MyClasses/CollisionSystem/ColliderModels.cpp
+        MyClasses/CollisionSystem/ColliderModels.h
 )
 
 add_executable(RawEngine main.cpp
@@ -72,7 +72,6 @@ add_custom_command(
         COMMAND ${CMAKE_COMMAND} -E copy_directory
         ${CMAKE_SOURCE_DIR}/shaders/
         ${CMAKE_CURRENT_BINARY_DIR}/shaders/)
-
 add_custom_command(
         TARGET RawEngine PRE_BUILD
         COMMAND ${CMAKE_COMMAND} -E copy_directory

@@ -11,17 +11,18 @@ void writeExcel(const BenchmarkResult& result, const std::string& filename) {
     xlnt::workbook workbook;
     auto worksheet = workbook.active_sheet();
 
-    worksheet.cell("A1").value("label");
-    worksheet.cell("B1").value("objects");
-    worksheet.cell("C1").value("useGrid");
-    worksheet.cell("D1").value("seed");
-    worksheet.cell("E1").value("time");
-    worksheet.cell("F1").value("fps");
-    worksheet.cell("G1").value("frameTime");
-    worksheet.cell("H1").value("satTests");
-    worksheet.cell("I1").value("satTime");
 
-    for (char col = 'A'; col <= 'I'; col++)
+    worksheet.cell("A1").value("time");
+    worksheet.cell("B1").value("fps");
+    worksheet.cell("C1").value("frameTime");
+    worksheet.cell("D1").value("satTests");
+    worksheet.cell("E1").value("satTime");
+    worksheet.cell("G1").value("label");
+    worksheet.cell("H1").value("objects");
+    worksheet.cell("I1").value("useGrid");
+    worksheet.cell("J1").value("seed");
+
+    for (char col = 'A'; col <= 'J'; col++)
     {
         auto cell = worksheet.cell(std::string(1, col) + "1");
         cell.font(xlnt::font().bold(true));
@@ -30,17 +31,17 @@ void writeExcel(const BenchmarkResult& result, const std::string& filename) {
     }
 
     int row = 2;
+    worksheet.cell("G" + std::to_string(row)).value(result.config.label);
+    worksheet.cell("H" + std::to_string(row)).value(result.config.objectCount);
+    worksheet.cell("I" + std::to_string(row)).value(result.config.useGrid ? 1 : 0);
+    worksheet.cell("J" + std::to_string(row)).value(result.config.randomSeed);
     for (const auto &s : result.samples)
     {
-        worksheet.cell("A" + std::to_string(row)).value(result.config.label);
-        worksheet.cell("B" + std::to_string(row)).value(result.config.objectCount);
-        worksheet.cell("C" + std::to_string(row)).value(result.config.useGrid ? 1 : 0);
-        worksheet.cell("D" + std::to_string(row)).value(result.config.randomSeed);
-        worksheet.cell("E" + std::to_string(row)).value(s.time);
-        worksheet.cell("F" + std::to_string(row)).value(s.fps);
-        worksheet.cell("G" + std::to_string(row)).value(s.frameTime);
-        worksheet.cell("H" + std::to_string(row)).value(s.satTests);
-        worksheet.cell("I" + std::to_string(row)).value(s.satTime);
+        worksheet.cell("A" + std::to_string(row)).value(s.time);
+        worksheet.cell("B" + std::to_string(row)).value(s.fps);
+        worksheet.cell("C" + std::to_string(row)).value(s.frameTime);
+        worksheet.cell("D" + std::to_string(row)).value(s.satTests);
+        worksheet.cell("E" + std::to_string(row)).value(s.satTime);
         row++;
     }
 

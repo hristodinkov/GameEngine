@@ -1,4 +1,4 @@
-﻿//
+//
 // Created by Hristo Dinkov on 14.4.2026 г..
 //
 

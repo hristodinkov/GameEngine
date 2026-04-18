@@ -39,13 +39,7 @@ void GameObject::render(Shader& shader,const glm::mat4& projection,const glm::ma
     if (!model.has_value())
         return;
 
-    glm::vec3 color ;
-    if (isColliding) {
-        color = glm::vec3(1.0f, 0.0f, 0.0f);
-    }
-    else {
-        color = glm::vec3(0.0f, 0.0f, 0.0f);
-    }
+    glm::vec3 color = glm::vec3(0.0f, 0.0f, 0.0f); ;
     glm::mat4 modelMat = getWorldTransform();
     glm::mat4 mvp = projection * view * modelMat;
 

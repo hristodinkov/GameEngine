@@ -19,9 +19,9 @@
 
 #include "MyClasses/Style.h"
 
-//#include "MyClasses/CollisionSystem/BenchmarkRunner.h"
 #include "MyClasses/CollisionSystem/BenschmarkWriter.h"
 #include "MyClasses/CollisionSystem/SpatialHashGrid.h"
+#include "MyClasses/CollisionSystem/ColliderModels.h"
 
 
 //#define MAC_CLION
@@ -56,11 +56,23 @@ glm::mat4 projection;
 //excel
 bool showFileLockedPopup = false;
 std::string lockedFilename;
-//test colishion
+//test collision
 bool benchmarkRunning = false;
 double benchmarkStartTime = 0.0;
 BenchmarkResult benchmarkResult;
 BenchmarkConfig benchmarkConfig;
+BenchmarkConfig uiConfig;
+bool testIsRunning = false;
+std::string filename;
+bool useGrid = false;
+bool frozenUseGrid = false;
+bool useTetrahedron = false;
+
+int bmObjectCount = 10;
+float bmDuration = 10.0f;
+
+char bmLabel[64] = "baseline";
+
 
 void myStyle() {
     style.SetupImGuiStyle();
@@ -124,99 +136,6 @@ float rectangleVertices[]{
 
 };
 
-std::vector<Vertex> cubeVertices = {
-    // FRONT (-Z)
-    {{-1,-1,-1}, {0,0,-1}, {0,0}},
-    {{ 1,-1,-1}, {0,0,-1}, {1,0}},
-    {{ 1, 1,-1}, {0,0,-1}, {1,1}},
-    {{-1, 1,-1}, {0,0,-1}, {0,1}},
-
-    // RIGHT (+X)
-    {{ 1,-1,-1}, {1,0,0}, {0,0}},
-    {{ 1,-1, 1}, {1,0,0}, {1,0}},
-    {{ 1, 1, 1}, {1,0,0}, {1,1}},
-    {{ 1, 1,-1}, {1,0,0}, {0,1}},
-
-    // BACK (+Z)
-    {{ 1,-1, 1}, {0,0,1}, {0,0}},
-    {{-1,-1, 1}, {0,0,1}, {1,0}},
-    {{-1, 1, 1}, {0,0,1}, {1,1}},
-    {{ 1, 1, 1}, {0,0,1}, {0,1}},
-
-    // LEFT (-X)
-    {{-1,-1, 1}, {-1,0,0}, {0,0}},
-    {{-1,-1,-1}, {-1,0,0}, {1,0}},
-    {{-1, 1,-1}, {-1,0,0}, {1,1}},
-    {{-1, 1, 1}, {-1,0,0}, {0,1}},
-
-    // TOP (+Y)
-    {{-1, 1,-1}, {0,1,0}, {0,0}},
-    {{ 1, 1,-1}, {0,1,0}, {1,0}},
-    {{ 1, 1, 1}, {0,1,0}, {1,1}},
-    {{-1, 1, 1}, {0,1,0}, {0,1}},
-
-    // BOTTOM (-Y)
-    {{-1,-1, 1}, {0,-1,0}, {0,0}},
-    {{ 1,-1, 1}, {0,-1,0}, {1,0}},
-    {{ 1,-1,-1}, {0,-1,0}, {1,1}},
-    {{-1,-1,-1}, {0,-1,0}, {0,1}},
-};
-
-
-std::vector<GLuint> cubeIndices = {
-    0,1,2, 2,3,0,       // front
-    4,5,6, 6,7,4,       // right
-    8,9,10, 10,11,8,    // back
-    12,13,14, 14,15,12, // left
-    16,17,18, 18,19,16, // top
-    20,21,22, 22,23,20  // bottom
-};
-
-std::vector<Vertex> tetraVerts = {
-    // Base face (points downward)
-    Vertex({-1, 0, -1}, glm::vec3(0, -1, 0), {0,0}),
-    Vertex({ 1, 0, -1}, glm::vec3(0, -1, 0), {1,0}),
-    Vertex({ 0, 0,  1}, glm::vec3(0, -1, 0), {0.5f,1}),
-
-    // Side face 1
-    Vertex({-1, 0, -1}, glm::normalize(glm::vec3( 2, 1.5,  0)), {0,0}),
-    Vertex({ 1, 0, -1}, glm::normalize(glm::vec3( 2, 1.5,  0)), {1,0}),
-    Vertex({ 0, 1.5, 0}, glm::normalize(glm::vec3( 2, 1.5,  0)), {0.5f,1}),
-
-    // Side face 2
-    Vertex({ 1, 0, -1}, glm::normalize(glm::vec3(-2, 1.5,  2)), {0,0}),
-    Vertex({ 0, 0,  1}, glm::normalize(glm::vec3(-2, 1.5,  2)), {1,0}),
-    Vertex({ 0, 1.5, 0}, glm::normalize(glm::vec3(-2, 1.5,  2)), {0.5f,1}),
-
-    // Side face 3
-    Vertex({ 0, 0,  1}, glm::normalize(glm::vec3( 1, 1.5, -2)), {0,0}),
-    Vertex({-1, 0, -1}, glm::normalize(glm::vec3( 1, 1.5, -2)), {1,0}),
-    Vertex({ 0, 1.5, 0}, glm::normalize(glm::vec3( 1, 1.5, -2)), {0.5f,1}),
-};
-
-
-// std::vector<glm::vec3> tetraVerts = {
-//     { 1,  1,  1},
-//     {-1, -1,  1},
-//     {-1,  1, -1},
-//     { 1, -1, -1}
-// };
-//
-// std::vector<unsigned int> tetraIndices = {
-//     0,1,2,
-//     0,1,3,
-//     0,2,3,
-//     1,2,3
-// };
-
-
-
-std::vector<unsigned int> tetraIndices = {
-    0, 1, 2,
-    3, 4, 5,
-    6, 7, 8,
-    9,10,11
-};
 
 
 void drawLines(Shader lineShader, SceneManager sceneManager, std::shared_ptr<GameObject> cube1, GLuint debugVAO, GLuint debugVBO) {
@@ -227,13 +146,19 @@ void drawLines(Shader lineShader, SceneManager sceneManager, std::shared_ptr<Gam
     lineShader.Activate();
     lineShader.SetMat4Uniform("viewMatrix", view);
     lineShader.SetMat4Uniform("projMatrix", projection);
-    lineShader.SetVec3Uniform("color", glm::vec3(0,1,0));
+
 
     glBindVertexArray(debugVAO);
     auto activeScene = sceneManager.getActiveScene();
     for (auto& obj : activeScene->objects)
     {
         if (!obj->collider) continue;
+        if (obj->isColliding) {
+            lineShader.SetVec3Uniform("color",glm::vec3(1,0,0));
+        }
+        else {
+            lineShader.SetVec3Uniform("color",glm::vec3(0,1,0));
+        }
 
         auto verts = obj->collider->getLineVertices();
 
@@ -289,7 +214,8 @@ void postProcessing(Shader invertColorsShader, Shader greyShader, Shader edgeDet
     }
 }
 
-void im_gui(GLFWwindow *window, core::Model cubeModel, SceneManager sceneManager, std::shared_ptr<GameObject> cube1, std::shared_ptr<GameObject> cube2, float deltaTime, float fps, double averageTimePerSAT, BenchmarkConfig cfg, bool &showGrid) {
+void im_gui(GLFWwindow *window, core::Model cubeModel,core::Model tetraModel, SceneManager& sceneManager, std::shared_ptr<GameObject> cube1, std::shared_ptr<GameObject> cube2, float deltaTime, float fps, double averageTimePerSAT, BenchmarkConfig& uiConfig, BenchmarkConfig& benchmarkConfig)
+{
     ImGui_ImplOpenGL3_NewFrame();
     ImGui_ImplGlfw_NewFrame();
     ImGui::NewFrame();
@@ -339,49 +265,51 @@ void im_gui(GLFWwindow *window, core::Model cubeModel, SceneManager sceneManager
     }
     ImGui::End();
 
-    static int bmObjectCount = 10;
-    static float bmDuration = 10.0f;
-    static bool bmUseGrid = false;
-    static char bmLabel[64] = "baseline";
+
 
     if (ImGui::Begin("Benchmark")) {
         ImGui::InputInt("Object Count", &bmObjectCount);
         ImGui::InputFloat("Duration (s)", &bmDuration);
-        ImGui::Checkbox("Use Grid", &bmUseGrid);
-        ImGui::Checkbox("Show Spatial Grid", &showGrid);
+        ImGui::Checkbox("Use Grid", &useGrid);
         ImGui::InputText("Label", bmLabel, sizeof(bmLabel));
+        ImGui::Checkbox("Use Tetrahedron",&useTetrahedron);
+
+        uiConfig.objectCount = bmObjectCount;
+        uiConfig.testDurationSeconds = bmDuration;
+        uiConfig.useGrid = useGrid;
+        uiConfig.label = bmLabel;
+        uiConfig.randomSeed = 47;
 
         if (ImGui::Button("Spawn Objects")) {
+            if (useTetrahedron) {
+                sceneManager.spawnCubesInScene(uiConfig.objectCount,uiConfig.randomSeed,tetraModel);
+            }
+            else {
+                sceneManager.spawnCubesInScene(uiConfig.objectCount,uiConfig.randomSeed,cubeModel);
+            }
 
-            cfg.objectCount = bmObjectCount;
-            cfg.testDurationSeconds = bmDuration;
-            cfg.useGrid = bmUseGrid;
-            cfg.label = bmLabel;
-            cfg.randomSeed = 47;
-            sceneManager.spawnCubesInScene(cfg.objectCount,cfg.randomSeed);
         }
         if (ImGui::Button("Run test")) {
-            std::string filename = std::string("test_") + bmLabel + ".xls";
+            filename = std::string("test_") + bmLabel + ".xls";
             if (isFileLocked(filename)) {
                 lockedFilename = filename;
                 showFileLockedPopup = true;
+            }
+            else if (benchmarkRunning) {
+                testIsRunning = true;
+            }
+            else {
 
-            } else {
-
+                benchmarkConfig = uiConfig;
                 benchmarkRunning = true;
                 benchmarkStartTime = glfwGetTime();
-                benchmarkConfig = cfg;
+
+                frozenUseGrid = useGrid;
 
                 benchmarkResult = BenchmarkResult();
-                benchmarkResult.config = cfg;
+                benchmarkResult.config = benchmarkConfig;
 
                 sceneManager.resetSatStats();
-                // BenchmarkRunner runner(sceneManager, window, cubeModel);
-                // auto result = runner.run(cfg);
-                //
-                // sceneManager.spawnCubesInScene(cfg.objectCount,cfg.randomSeed);
-                // writeExcel(result, filename);
-
             }
 
         }
@@ -398,6 +326,22 @@ void im_gui(GLFWwindow *window, core::Model cubeModel, SceneManager sceneManager
 
         if (ImGui::Button("OK", ImVec2(120, 0))) {
             showFileLockedPopup = false;
+            ImGui::CloseCurrentPopup();
+        }
+
+        ImGui::EndPopup();
+    }
+
+    if (testIsRunning) {
+        ImGui::OpenPopup("Test is running!");
+    }
+
+    if (ImGui::BeginPopupModal("Test is running!", NULL, ImGuiWindowFlags_AlwaysAutoResize)) {
+        ImGui::Text("A test is currently running.");
+        ImGui::Text("Please wait until the test is complete.");
+
+        if (ImGui::Button("OK", ImVec2(120, 0))) {
+            testIsRunning = false;
             ImGui::CloseCurrentPopup();
         }
 
@@ -443,31 +387,23 @@ void try_run_benchmark_test(SceneManager sceneManager, float deltaTime, float fp
 
         if (elapsed >= benchmarkConfig.testDurationSeconds)
         {
-            // Benchmark finished
             benchmarkRunning = false;
-
-            std::string filename = "test_" + benchmarkConfig.label + ".xls";
             writeExcel(benchmarkResult, filename);
-
-            // Respawn objects for normal mode
-            sceneManager.spawnCubesInScene(
-                benchmarkConfig.objectCount,
-                benchmarkConfig.randomSeed
-            );
         }
         else
         {
-            // Collect sample
-            BenchmarkSample s;
-            s.time = float(elapsed);
-            s.fps = fps;
-            s.frameTime = deltaTime;
-            s.satTests = sceneManager.getSatCount();
-            s.satTime = sceneManager.getSatTime();
-            benchmarkResult.samples.push_back(s);
+            BenchmarkSample sample;
+            sample.time = float(elapsed);
+            sample.fps = fps;
+            sample.frameTime = deltaTime;
+            sample.satTests = sceneManager.getSatCount();
+            sample.satTime = sceneManager.getSatTime();
+            benchmarkResult.samples.push_back(sample);
         }
     }
 }
+
+
 
 int main() {
     glfwInit();
@@ -530,12 +466,14 @@ int main() {
 
     Shader lineShader("shaders/line.vs","shaders/line.fs");
 
+
+    SceneManager sceneManager;
+    SpatialHashGrid grid;
+
     core::Mesh cubeMesh (cubeVertices, cubeIndices);
     core::Model cubeModel({cubeMesh});
     core::Mesh tetraMesh(tetraVerts,tetraIndices);
     core::Model tetraModel({tetraMesh});
-    SceneManager sceneManager(cubeModel);
-    SpatialHashGrid grid;
 
     // auto scene1 = sceneManager.createScene("Cube");
     // auto monkey = std::make_shared<GameObject>("Strange Monkey");
@@ -616,11 +554,9 @@ int main() {
                  clearColor.g, clearColor.b, clearColor.a);
 
 
-
-
-    camera.transform.setPos(glm::vec3(0.0f, 0.0f, 10.0f));
+    camera.transform.setPos(glm::vec3(0.0f, 0.0f, 35.0f));
     //camera.rotate(glm::vec3(1,0,0), -10.0f * 3.1415f / 180);
-    camera.speed = 0.002f;
+    camera.speed = 0.2f;
 
     double currentTime = glfwGetTime();
     double finishFrameTime = 0.0;
@@ -632,7 +568,6 @@ int main() {
     BenchmarkConfig cfg;
     static int objectCountInput = 10;
     static bool objectsSpawned = false;
-    static bool showGrid = false;
 
     float rotationStrength = 100.0f;
 
@@ -723,11 +658,10 @@ int main() {
 
     float aspect = static_cast<float>(g_width) / g_height;
 
-    int currentPostProcessingMode = 0;
-
     while (!glfwWindowShouldClose(window))
     {
-        im_gui(window, cubeModel, sceneManager, cube1, cube2, deltaTime, fps, averageTimePerSAT, cfg, showGrid);
+        int currentPostProcessingMode = 0;
+        im_gui(window, cubeModel,tetraModel, sceneManager, cube1, cube2, deltaTime, fps, averageTimePerSAT,uiConfig,benchmarkConfig);
 
         if (glfwGetKey(window, GLFW_KEY_1) == GLFW_PRESS)
             sceneManager.setActiveScene("Monkey");
@@ -740,8 +674,7 @@ int main() {
 
         std::vector<std::pair<GameObject*, GameObject*>> pairs;
 
-
-        if (showGrid || (benchmarkRunning && benchmarkConfig.useGrid)) {
+        if (bool useGridNow = benchmarkRunning ? frozenUseGrid : useGrid) {
             grid.buildGrid(activeScene->objects);
             pairs = grid.computePairs();
         } else {
@@ -752,10 +685,6 @@ int main() {
 
         for (auto& [A, B] : pairs) {
             sceneManager.runSAT(A, B);
-        }
-
-        if (showGrid) {
-            grid.drawDebug(debugVAO, debugVBO, lineShader);
         }
 
         try_run_benchmark_test(sceneManager, deltaTime, fps);

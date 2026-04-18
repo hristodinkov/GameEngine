@@ -10,7 +10,6 @@
 #include "SinMovement.h"
 #include "CollisionSystem/Collision.h"
 
-SceneManager::SceneManager(core::Model cube) : model(cube) {}
 
 std::shared_ptr<Scene> SceneManager::createScene(const std::string& name) {
     std::shared_ptr<Scene> scene = std::make_shared<Scene>();
@@ -22,10 +21,9 @@ std::shared_ptr<Scene> SceneManager::createScene(const std::string& name) {
 }
 
 void SceneManager::setActiveScene(const std::string& name) {
-    auto sceneToActivate = scenesDictionary.find(name); //scenes.end() is a special iterator that points one past the last valid element in the map
+    auto sceneToActivate = scenesDictionary.find(name);
     if (sceneToActivate != scenesDictionary.end()) {
         currentScene = sceneToActivate->second;
-        //std::cout << "Switched to scene: " << name << std::endl;
     }
 
 }
@@ -59,13 +57,13 @@ void SceneManager::resetSatStats() {
     satTimeThisFrame = 0.0f;
 }
 
-void SceneManager::spawnCubesInScene(int count,int seed) {
+void SceneManager::spawnCubesInScene(int count,int seed, const core::Model& model) {
     clearObjects();
     auto scene = getActiveScene();
     if (!scene) return;
 
 
-    float border = count/2.5;
+    float border = count*0.3;
 
     for (int i = 0; i < count; i++) {
         auto cube = scene->addObject(std::make_shared<GameObject>("Cube"+std::to_string(i)));
@@ -120,6 +118,8 @@ void SceneManager::runSAT(GameObject *A, GameObject *B) {
         B->isColliding = true;
     }
 }
+
+
 
 
 
