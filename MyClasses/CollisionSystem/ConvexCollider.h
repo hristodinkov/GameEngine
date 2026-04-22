@@ -23,9 +23,6 @@ public:
     std::vector<glm::vec3> faceNormals;
     std::vector<glm::vec3> edges;
 
-    GLuint lineVAO = 0;
-    GLuint lineVBO = 0;
-
     std::vector<std::pair<unsigned int, unsigned int>> edgeIndexPairs;
     std::vector<std::pair<unsigned int, unsigned int>> allEdges;
 
@@ -41,7 +38,6 @@ public:
     void addEdge(unsigned int a, unsigned int b,std::map<std::pair<unsigned int, unsigned int>, int> &edgeCount);
 
     std::vector<glm::vec3> getLineVertices() const;
-
 
 };
 

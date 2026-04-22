@@ -13,18 +13,6 @@
 
 ConvexCollider::ConvexCollider(const std::vector<glm::vec3> &vertices, const std::vector<unsigned int>& indices, const glm::mat4 modelMatrix) {
 
-    glGenVertexArrays(1, &lineVAO);
-    glGenBuffers(1, &lineVBO);
-
-    glBindVertexArray(lineVAO);
-    glBindBuffer(GL_ARRAY_BUFFER, lineVBO);
-
-    // each vertex = vec3 position
-    glEnableVertexAttribArray(0);
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(glm::vec3), (void*)0);
-
-    glBindVertexArray(0);
-
     localVertices = vertices;
     modelIndices = indices;
     for (auto element: vertices) {
@@ -32,12 +20,17 @@ ConvexCollider::ConvexCollider(const std::vector<glm::vec3> &vertices, const std
     }
 
     std::map<std::pair<unsigned int, unsigned int>, int> edgeCount;
+    allEdges.clear();
 
     for (size_t i = 0; i < indices.size(); i += 3)
     {
         unsigned int i0 = indices[i];
         unsigned int i1 = indices[i + 1];
         unsigned int i2 = indices[i + 2];
+
+        allEdges.push_back(std::make_pair(i0, i1));
+        allEdges.push_back(std::make_pair(i1, i2));
+        allEdges.push_back(std::make_pair(i2, i0));
 
         addEdge(i0, i1, edgeCount);
         addEdge(i1, i2, edgeCount);
@@ -56,24 +49,11 @@ ConvexCollider::ConvexCollider(const std::vector<glm::vec3> &vertices, const std
         const auto &edge = entry.first;
         int count = entry.second;
 
-        if (count == 1)  // boundary edge
+        if (count == 1)
         {
             edgeIndexPairs.push_back(edge);
         }
     }
-    allEdges.clear();
-
-    for (size_t i = 0; i < modelIndices.size(); i += 3)
-    {
-        unsigned int i0 = modelIndices[i];
-        unsigned int i1 = modelIndices[i + 1];
-        unsigned int i2 = modelIndices[i + 2];
-
-        allEdges.push_back({i0, i1});
-        allEdges.push_back({i1, i2});
-        allEdges.push_back({i2, i0});
-    }
-
 };
 
 void ConvexCollider::update(const glm::mat4 &worldTransform) {

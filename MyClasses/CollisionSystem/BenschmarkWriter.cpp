@@ -11,7 +11,6 @@ void writeExcel(const BenchmarkResult& result, const std::string& filename) {
     xlnt::workbook workbook;
     auto worksheet = workbook.active_sheet();
 
-
     worksheet.cell("A1").value("time");
     worksheet.cell("B1").value("fps");
     worksheet.cell("C1").value("frameTime");

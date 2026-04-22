@@ -22,7 +22,6 @@ public:
 
     std::vector<std::pair<GameObject*, GameObject*>> computePairs();
 
-    void drawDebug(GLuint debugVAO, GLuint debugVBO, Shader& lineShader) ;
 
     private:
     struct CellCoord {
@@ -45,8 +44,6 @@ public:
     std::unordered_map<CellCoord, std::vector<GameObject*>, CellCoordHash> table;
 
     CellCoord toCell(const glm::vec3& pos) const;
-
-    std::vector<glm::vec3> generateAABBLineVertices(const glm::vec3& minCorner, const glm::vec3& maxCorner);
 };
 
 
