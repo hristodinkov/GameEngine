@@ -11,14 +11,14 @@ Together, these systems form a compact but fully functional engine that demonstr
 
 | System | Description | Preview |
 |-------|-------------|---------|
-|**1. GameObject & Transform System**| Core entity system supporting parent–child hierarchies, world/local transforms, and automatic model matrix updates. Every object can contain a model, collider, multiple behaviors and multiple children.| gif|
-|**2. Behavior System**| Component‑like scripts (Translate, Rotate, SinMovement, custom behaviors) that update every frame. Behaviors are modular and attachable to any GameObject. | gif|
-|**3. Rendering Pipeline (OpenGL)**|Shader loading, compilation, linking, uniform management, MVP matrix setup, texture binding, and model rendering. Includes a controllable camera with WASD movement + mouse rotation|gif|
-|**4. Convex Collision System (SAT)**|Full Separating Axis Theorem implementation: face normals, edge cross‑products, axis projection, overlap testing. Works with any convex mesh| gif|
-|**5. Spatial Hash Grid**|Hashes objects into 3D grid cells to drastically reduce SAT calls. Only nearby objects are tested. Essential for scaling to thousand of objects.|gif|
-|**6. Scene & SceneManager**|Supports multiple scenes, active scene switching, object spawning. |gif|
-|**7. ADS Lighting**|Ambient–Diffuse–Specular lighting system for dynamic scene illumination. Supports multiple light objects.|gif|
-|**9. Post‑Processing**|Supports invert, grayscale, edge detection and pixelization effects|gif|
+|**1. GameObject & Transform System**| Core entity system supporting parent–child hierarchies, world/local transforms, and automatic model matrix updates. Every object can contain a model, collider, multiple behaviors and multiple children.| <img src="_gifs/GO_showcase.gif" width="500" height="500">|
+|**2. Behavior System**| Component‑like scripts (Translate, Rotate, SinMovement, custom behaviors) that update every frame. Behaviors are modular and attachable to any GameObject. | <img src="_gifs/behaviour_showcase.gif" width="500" height="500">|
+|**3. Rendering Pipeline (OpenGL)**|Shader loading, compilation, linking, uniform management, MVP matrix setup, texture binding, and model rendering. Includes a controllable camera with WASD movement + mouse rotation|<img src="_gifs/camera_showcase.gif" width="500" height="500">|
+|**4. Convex Collision System (SAT)**|Full Separating Axis Theorem implementation: face normals, edge cross‑products, axis projection, overlap testing. Works with any convex mesh| <img src="_gifs/cubes_noGrid.gif" width="500" height="500">|
+|**5. Spatial Hash Grid**|Hashes objects into 3D grid cells to drastically reduce SAT calls. Only nearby objects are tested. Essential for scaling to thousand of objects.|<img src="_gifs/cubes_withGrid.gif" width="500" height="500">|
+|**6. Scene & SceneManager**|Supports multiple scenes, active scene switching, object spawning. |<img src="_gifs/scene_switch.gif" width="500" height="500">|
+|**7. ADS Lighting**|Ambient–Diffuse–Specular lighting system for dynamic scene illumination. Supports multiple light objects.|<img src="_gifs/light.gif" width="500" height="500">|
+|**8. Post‑Processing**|Supports invert, grayscale, edge detection and pixelization effects|<img src="_gifs/post_processing.gif" width="500" height="500">|
 
 ## Future improvements
 1. To complete my git wiki page (https://github.com/hristodinkov/AdvRendering)
