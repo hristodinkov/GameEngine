@@ -9,6 +9,7 @@
 #include <string>
 
 void writeExcel(const BenchmarkResult& result, const std::string& filename);
+void writeCSV(const BenchmarkResult& result, const std::string& filename);
 
 
 #endif //RAWENGINE_BENSCHMARKWRITER_H

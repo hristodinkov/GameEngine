@@ -11,7 +11,7 @@
 
 struct BenchmarkConfig {
     int objectCount = 10;
-    float testDurationSeconds = 10.0f;
+    int testDurationFrames = 10.0f;
     bool useGrid = false;
     unsigned int randomSeed = 47;
     std::string label = "baseline";
@@ -19,10 +19,12 @@ struct BenchmarkConfig {
 
 struct BenchmarkSample {
     float time;
+    int frame;
     float fps;
     float frameTime;
     int satTests;
     double satTime;
+    int collisions;
 };
 
 struct BenchmarkResult {

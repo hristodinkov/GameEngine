@@ -87,11 +87,10 @@ std::vector<glm::vec3> ConvexCollider::getLineVertices() const {
 void ConvexCollider::project(const glm::vec3& axis, float& outMin, float& outMax) const
 {
     float first = glm::dot(worldVertices[0], axis);
-    outMin = first;
-    outMax = first;
+    outMax = outMin = first;
 
-    for (size_t i = 1; i < worldVertices.size(); i++) {
-        float p = glm::dot(worldVertices[i], axis);
+    for (const auto& worldVertex : worldVertices) {
+        float p = glm::dot(worldVertex, axis);
         outMin = std::min(outMin, p);
         outMax = std::max(outMax, p);
     }

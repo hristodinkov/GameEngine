@@ -63,7 +63,7 @@ void SceneManager::spawnCubesInScene(int count,int seed, const core::Model& mode
     if (!scene) return;
 
 
-    float border = count*0.3;
+    float border = 100;
 
     for (int i = 0; i < count; i++) {
         auto cube = scene->addObject(std::make_shared<GameObject>("Cube"+std::to_string(i)));

@@ -27,9 +27,14 @@ std::vector<std::pair<GameObject *, GameObject *> > SpatialHashGrid::computePair
     std::vector<std::pair<GameObject *, GameObject *>> pairs;
 
     static const std::vector<CellCoord> neighborOffsets = {
-        {0,0,0}, {1,0,0}, {-1,0,0},
-        {0,1,0}, {0,-1,0},
-        {0,0,1}, {0,0,-1}
+
+        { 0, 0, 0},
+
+        { 1, 0, 0},
+        {-1, 1, 0}, { 0, 1, 0}, { 1, 1, 0},
+        {-1,-1, 1}, { 0,-1, 1}, { 1,-1, 1},
+        {-1, 0, 1}, { 0, 0, 1}, { 1, 0, 1},
+        {-1, 1, 1}, { 0, 1, 1}, { 1, 1, 1},
     };
 
     for (auto& [coord, objects] : table) {
@@ -53,6 +58,7 @@ std::vector<std::pair<GameObject *, GameObject *> > SpatialHashGrid::computePair
     }
     return pairs;
 }
+
 
 
 
