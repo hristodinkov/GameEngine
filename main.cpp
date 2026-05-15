@@ -74,8 +74,10 @@ int benchmarkFrameCounter = 0;
 
 int bmObjectCount = 10;
 int bmDuration = 200;
-bool bmCamera = false;
+bool bmCamera = true;
 char bmLabel[64] = "baseline";
+//.bat settings
+bool autoRun = false;
 
 SpatialHashGrid grid;
 void myStyle() {
@@ -297,6 +299,7 @@ void im_gui(GLFWwindow *window, core::Model cubeModel,core::Model tetraModel, Sc
         if (ImGui::Button("Run test")) {
             filename = std::string("test_") + bmLabel + ".xls";
 
+            uiConfig.cellSize = grid.cellSize;
             if (bmCamera) {
                 camera.xRotation = 0.0f;
                 camera.yRotation = 180.0f;
@@ -333,9 +336,31 @@ void im_gui(GLFWwindow *window, core::Model cubeModel,core::Model tetraModel, Sc
             }
 
         }
+
+
     }
     ImGui::End();
 
+    if (autoRun && !benchmarkRunning) {
+        filename = std::string("test_") + bmLabel + ".xls";
+
+        uiConfig.cellSize = grid.cellSize;
+        benchmarkConfig = uiConfig;
+
+        frozenUseGrid = useGrid;
+        benchmarkRunning = true;
+        benchmarkStartTime = glfwGetTime();
+
+        benchmarkResult = BenchmarkResult();
+        benchmarkResult.config = benchmarkConfig;
+
+        sceneManager.resetSatStats();
+
+        if (useTetrahedron)
+            sceneManager.spawnCubesInScene(uiConfig.objectCount, uiConfig.randomSeed, tetraModel);
+        else
+            sceneManager.spawnCubesInScene(uiConfig.objectCount, uiConfig.randomSeed, cubeModel);
+    }
 
     if (showFileLockedPopup) {
         ImGui::OpenPopup("File Locked");
@@ -440,6 +465,9 @@ void try_run_benchmark_test(SceneManager& sceneManager, float deltaTime, float f
         //writeCSV(benchmarkResult,filename);
         writeExcel(benchmarkResult, filename);
         benchmarkFrameCounter = 0;
+        if (autoRun) {
+            exit(0);
+        }
         return;
     }
 
@@ -451,13 +479,50 @@ void try_run_benchmark_test(SceneManager& sceneManager, float deltaTime, float f
     sample.frameTime = deltaTime;
     sample.satTests = sceneManager.getSatCount();
     sample.satTime = sceneManager.getSatTime();
-    //sample.collisions =
+    sample.collisions = sceneManager.getCollisionsThisFrame();
     benchmarkResult.samples.push_back(sample);
 }
 
 
 
-int main() {
+int main(int argc,char** argv) {
+
+    for (int i = 1; i < argc; i++) {
+        std::string arg = argv[i];
+
+        if (arg == "--objects") bmObjectCount = std::stoi(argv[++i]);
+        else if (arg == "--frames") bmDuration = std::stoi(argv[++i]);
+        else if (arg == "--grid") useGrid = std::stoi(argv[++i]) != 0;
+        else if (arg == "--cell") grid.cellSize = std::stof(argv[++i]);
+        else if (arg == "--label") {
+            strncpy(bmLabel, argv[++i], sizeof(bmLabel) - 1);
+            bmLabel[sizeof(bmLabel) - 1] = '\0';
+        }
+        else if (arg == "--tetra") useTetrahedron = std::stoi(argv[++i]) != 0;
+        else if (arg == "--seed") uiConfig.randomSeed = std::stoi(argv[++i]);
+        else if (arg == "--autorun") autoRun = true;
+    }
+
+    if (autoRun&&bmCamera) {
+        if (bmCamera) {
+            camera.xRotation = 0.0f;
+            camera.yRotation = 180.0f;
+            camera.transform.rotation = glm::vec3(
+                glm::radians(camera.xRotation),
+                glm::radians(camera.yRotation),
+                0.0f
+            );
+        }
+    }
+
+    // Copy CLI values into uiConfig so autorun uses them
+    uiConfig.objectCount = bmObjectCount;
+    uiConfig.testDurationFrames = bmDuration;
+    uiConfig.useGrid = useGrid;
+    uiConfig.label = bmLabel;
+    uiConfig.randomSeed = uiConfig.randomSeed;
+
+
     glfwInit();
     glfwWindowHint(GLFW_SAMPLES, 4);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);

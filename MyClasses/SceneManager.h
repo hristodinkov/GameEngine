@@ -16,6 +16,7 @@ private:
     std::shared_ptr<Scene> currentScene = nullptr;
     int satTestsThisFrame;
     double satTimeThisFrame;
+    int collisionsThisFrame;
 public:
 
     std::shared_ptr<Scene> createScene(const std::string& name);
@@ -24,6 +25,7 @@ public:
 
     int getSatCount() const;
     double getSatTime() const;
+    int getCollisionsThisFrame() const;
     void resetSatStats();
 
     void spawnCubesInScene(int count,int seed,const core::Model& model);

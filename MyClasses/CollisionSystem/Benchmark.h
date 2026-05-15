@@ -15,6 +15,7 @@ struct BenchmarkConfig {
     bool useGrid = false;
     unsigned int randomSeed = 47;
     std::string label = "baseline";
+    double cellSize = 0;
 };
 
 struct BenchmarkSample {

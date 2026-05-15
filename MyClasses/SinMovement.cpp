@@ -8,7 +8,8 @@
 
 void SinMovement::update(float deltaTime)
 {
-    localTime += deltaTime;
+    const float fixedStep = 1.0f / 60.0f; // locked to 60hz
+    localTime += fixedStep;
 
     float value = sin(localTime * speed + phaseOffset) * amplitude;
 

@@ -55,7 +55,13 @@ double SceneManager::getSatTime() const {
 void SceneManager::resetSatStats() {
     satTestsThisFrame = 0;
     satTimeThisFrame = 0.0f;
+    collisionsThisFrame = 0;
 }
+
+int SceneManager::getCollisionsThisFrame() const {
+    return collisionsThisFrame;
+}
+
 
 void SceneManager::spawnCubesInScene(int count,int seed, const core::Model& model) {
     clearObjects();
@@ -114,6 +120,7 @@ void SceneManager::runSAT(GameObject *A, GameObject *B) {
     satTimeThisFrame += deltaTime;
 
     if (hit) {
+        collisionsThisFrame++;
         A->isColliding = true;
         B->isColliding = true;
     }
