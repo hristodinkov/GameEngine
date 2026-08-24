@@ -34,6 +34,8 @@ public:
     struct CellCoordHash {
         size_t operator()(const CellCoord& c) const {
             return (size_t)(
+                //The numbers here a based on the paper Optimized Spatial Hashing for Collision Detection of Deformable Objects by
+                //Teschner et al. (2003) https://cgl.ethz.ch/Downloads/Publications/Papers/2003/Tes03/Tes03.pdf
                 c.i * 73856093 ^
                 c.j * 19349663 ^
                 c.k * 83492791

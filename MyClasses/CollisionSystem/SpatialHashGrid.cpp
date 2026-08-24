@@ -27,9 +27,7 @@ std::vector<std::pair<GameObject *, GameObject *> > SpatialHashGrid::computePair
     std::vector<std::pair<GameObject *, GameObject *>> pairs;
 
     static const std::vector<CellCoord> neighborOffsets = {
-
         { 0, 0, 0},
-
         { 1, 0, 0},
         {-1, 1, 0}, { 0, 1, 0}, { 1, 1, 0},
         {-1,-1, 1}, { 0,-1, 1}, { 1,-1, 1},
@@ -37,20 +35,26 @@ std::vector<std::pair<GameObject *, GameObject *> > SpatialHashGrid::computePair
         {-1, 1, 1}, { 0, 1, 1}, { 1, 1, 1},
     };
 
-    for (auto& [coord, objects] : table) {
-        for (auto& off : neighborOffsets) {
-            CellCoord neighbor = {coord.i+off.i, coord.j+off.j, coord.k+off.k};
+    for (auto& pair : table) {
+        CellCoord cellCoord = pair.first;
+        auto& objectsInCell = pair.second;
 
-            if (!table.contains(neighbor)) {
+        for (auto& offset : neighborOffsets) {
+            CellCoord neighbourCoord;
+            neighbourCoord.i = cellCoord.i + offset.i;
+            neighbourCoord.j = cellCoord.j + offset.j;
+            neighbourCoord.k = cellCoord.k + offset.k;
+
+            if (!table.contains(neighbourCoord)) {
                 continue;
             }
 
-            auto& others = table[neighbor];
+            auto& objectsInNeighbour = table[neighbourCoord];
 
-            for (auto* A : objects) {
-                for (auto* B : others) {
-                    if (A<B) {
-                        pairs.emplace_back(A,B);
+            for (auto* objectA : objectsInCell) {
+                for (auto* objectB : objectsInNeighbour) {
+                    if (objectA < objectB) {
+                        pairs.emplace_back(objectA, objectB);
                     }
                 }
             }

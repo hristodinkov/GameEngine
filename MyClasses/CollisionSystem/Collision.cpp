@@ -15,18 +15,19 @@
 
 bool Collision::SATCollision(const ConvexCollider& A, const ConvexCollider& B)
 {
+    const float minAxisLenght = 0.0001f;
     std::vector<glm::vec3> axes;
 
     const auto& normalsA = A.getFaceNormals();
     for (const glm::vec3& normal : normalsA) {
-        if (glm::length(normal) > 0.0001f) {
+        if (glm::length(normal) > minAxisLenght) {
             axes.push_back(glm::normalize(normal));
         }
     }
 
     const auto& normalsB = B.getFaceNormals();
     for (const glm::vec3& normal : normalsB) {
-        if (glm::length(normal) > 0.0001f) {
+        if (glm::length(normal) > minAxisLenght) {
             axes.push_back(glm::normalize(normal));
         }
     }

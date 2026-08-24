@@ -31,6 +31,9 @@ public:
     void update(const glm::mat4& worldTransform);
 
     std::vector<glm::vec3> getFaceNormals() const;
+
+//const std::vector<glm::vec3>& getFaceNormals() const;
+
     std::vector<std::pair<unsigned int, unsigned int>> getEdges() const;
 
     void project(const glm::vec3& axis, float& outMin, float& outMax) const;
