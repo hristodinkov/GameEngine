@@ -6,8 +6,10 @@
 #include "../MyClasses/GlobalVariables.h"
 #include <imgui.h>
 #include <imgui_impl_glfw.h>
-#include <imgui_impl_opengl3.h>  
+#include <imgui_impl_opengl3.h>
 #include <unordered_map>
+
+#include "../Utilities/LightObj.h"
 
 void drawCubeControlsPanel(UIContext& ctx) {
     if (ImGui::Begin("Cube Controls")) {
@@ -175,14 +177,29 @@ void drawScenesPanel(UIContext& ctx) {
 
 void drawScenePanel(UIContext& ctx) {
     static const std::unordered_map<std::string, void(*)(UIContext&)> scenePanels = {
-        { "Cube", drawBenchmarkPanel },
-        { "Car",  drawCubeControlsPanel },
+        { "Collision", drawBenchmarkPanel },
+        { "Playground", drawCubeControlsPanel },
     };
 
     std::string active = ctx.sceneManager.getActiveScene()->getName();
     auto it = scenePanels.find(active);
     if (it != scenePanels.end())
         it->second(ctx);
+}
+
+void drawLightingPanel(UIContext& ctx) {
+    if (ImGui::Begin("Lighting")) {
+        ImGui::SliderFloat3("Light Position", glm::value_ptr(guiLightPos), -50.0f, 50.0f);
+        ImGui::ColorEdit3("Light Color", glm::value_ptr(guiLightColor));
+        ImGui::SliderFloat("Light Radius", &guiLightRadius, 0.0f, 100.0f);
+
+        ImGui::Separator();
+
+        ImGui::SliderFloat("Shininess", &guiShininess, 1.0f, 512.0f);
+        ImGui::SliderFloat("Specular Strength", &guiSpecular, 0.0f, 256.0f);
+        ImGui::SliderFloat("Ambient Strength", &guiAmbient, 0.0f, 1.0f);
+    }
+    ImGui::End();
 }
 
 void im_gui(GLFWwindow* window, UIContext& ctx) {
@@ -201,6 +218,7 @@ void im_gui(GLFWwindow* window, UIContext& ctx) {
     drawScenePanel(ctx);
     drawGridSettingsPanel(ctx);
     drawPerformancePanel(ctx);
+    drawLightingPanel(ctx);
 
     if (autoRun && !benchmarkRunning) {
         filename = std::string("test_") + bmLabel + ".xls";

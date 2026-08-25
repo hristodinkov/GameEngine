@@ -4,6 +4,7 @@
 
 #include "GlobalVariables.h"
 #include <fstream>
+#include <glm/glm.hpp>
 
 // Core engine state
 Style style;
@@ -32,6 +33,13 @@ int bmDuration = 200;
 bool bmCamera = true;
 char bmLabel[64] = "baseline";
 bool autoRun = false;
+
+glm::vec3 guiLightPos = glm::vec3(0.0f, 10.0f, 0.0f);
+glm::vec4 guiLightColor = glm::vec4(184.0f/256.0f, 23.0f/256.0f, 222.0f/256.0f, 1.0f);
+float guiLightRadius = 35.0f;
+float guiShininess = 75.0f;
+float guiSpecular = 42.0f;
+float guiAmbient = 0.25f;
 
 bool isFileLocked(const std::string& filename) {
     std::ofstream file(filename, std::ios::app);

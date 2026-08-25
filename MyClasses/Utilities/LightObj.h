@@ -15,13 +15,17 @@ private:
     float radius;
     int type;
 public:
-    LightObj(glm::vec3 pos,glm::vec4 color,float radius,int type = 1):position(pos),color(color), radius(radius) {}
+
+
+    LightObj(glm::vec3 pos,glm::vec4 color,float radius,int type = 1):position(pos),color(color), radius(radius), type(type) {}
     ~LightObj() = default;
 
     LightObj& operator = (const LightObj& anotherLight) {
         if (this != &anotherLight) {
             this->position = anotherLight.getPos();
             this->color = anotherLight.getColor();
+            radius = anotherLight.getRadius();
+            type = anotherLight.getType();
         }
         return *this;
     }
@@ -29,5 +33,6 @@ public:
     glm::vec3 getPos() const;
     glm::vec4 getColor() const;
     float getRadius() const;
+    int getType() const;
 };
 #endif //RAWENGINE_LIGHTOBJ_H

@@ -38,6 +38,13 @@ extern bool bmCamera;
 extern char bmLabel[64];
 extern bool autoRun;
 
+extern glm::vec3 guiLightPos;
+extern glm::vec4 guiLightColor;
+extern float guiLightRadius;
+extern float guiShininess;
+extern float guiSpecular;
+extern float guiAmbient;
+
 bool isFileLocked(const std::string& filename);
 void myStyle();
 void processInput(GLFWwindow *window);

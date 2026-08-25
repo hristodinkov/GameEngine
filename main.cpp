@@ -57,9 +57,6 @@ void framebufferSizeCallback(GLFWwindow *window,
         glfwSetInputMode(window, GLFW_RAW_MOUSE_MOTION, GLFW_TRUE);
 }
 
-
-
-
 float rectangleVertices[]{
     //Coords |   texCoords
     //x , y     , u    , v
@@ -111,6 +108,7 @@ void drawLines(Shader lineShader, SceneManager sceneManager, std::shared_ptr<Gam
 
 void postProcessing(Shader invertColorsShader, Shader greyShader, Shader edgeDetectionShader, Shader pixelizationShader, float pixels, float kernelCenterValueMatrix, unsigned int fbTexture, unsigned int quadVAO, int currentPostProcessingMode) {
     if (currentPostProcessingMode != 0) {
+        glBindFramebuffer(GL_FRAMEBUFFER, 0);
         glDisable(GL_DEPTH_TEST);
         glDisable(GL_CULL_FACE);
 
@@ -151,11 +149,11 @@ void postProcessing(Shader invertColorsShader, Shader greyShader, Shader edgeDet
     }
 }
 
-void set_modelShader(Shader modelShader, core::Texture cmgtGatoTexture, /*glm::vec3 guiLightPos*/ float guiShininess, float guiSpecular, float guiAmbient, float guiLightRadius) {
+void set_modelShader(Shader modelShader, core::Texture cmgtGatoTexture, float guiShininess, float guiSpecular, float guiAmbient) {
     modelShader.Activate();
-    //modelShader.SetVec3Uniform("lightPos", guiLightPos);
     modelShader.SetVec3Uniform("cameraPos", camera.getPos());
-    //modelShader.SetVec3Uniform("lightColor", guiLightColor);
+    modelShader.SetVec3Uniform("lightPos", guiLightPos);
+    modelShader.SetVec3Uniform("lightColor", guiLightColor);
     modelShader.SetFloatUniform("lightRadius", guiLightRadius);
     modelShader.SetFloatUniform("ambientStrength", guiAmbient);
     modelShader.SetFloatUniform("specularStrength", guiSpecular);
@@ -239,8 +237,6 @@ int main(int argc,char** argv) {
             );
         }
     }
-
-    // Copy CLI values into uiConfig so autorun uses them
     uiConfig.objectCount = bmObjectCount;
     uiConfig.testDurationFrames = bmDuration;
     uiConfig.useGrid = useGrid;
@@ -278,7 +274,6 @@ int main(int argc,char** argv) {
     ImGuiIO &io = ImGui::GetIO();
     io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;
 
-    //Setup platforms
     ImGui_ImplGlfw_InitForOpenGL(window, true);
     ImGui_ImplOpenGL3_Init("#version 400");
 
@@ -317,73 +312,46 @@ int main(int argc,char** argv) {
     core::Mesh tetraMesh(tetraVerts,tetraIndices);
     core::Model tetraModel({tetraMesh});
 
-    // auto scene1 = sceneManager.createScene("Cube");
-    // auto monkey = std::make_shared<GameObject>("Strange Monkey");
-    // auto suzanne = scene1->addObject(monkey);
-    // suzanne->model = core::AssimpLoader::loadModel("models/nonormalmonkey.obj");
-    // suzanne->translate(glm::vec3(-2.0f, 0.0f, 0.0f));
-    //suzanne->addBehavior(std::make_shared<Translate>(1.0f,glm::vec3(0.1f, 0.0f, 0.0f)));
-     // suzanne->addBehavior(std::make_shared<Rotate>(
-     //     glm::vec3(0, 1, 0), 1
-     // ));
+        // ---------------- Scene 1: Playground (Transform hierarchy + Behaviors) ----------------
+    auto playgroundScene = sceneManager.createScene("Playground");
 
-    auto scene1 = sceneManager.createScene("Cube");
-    // auto cube = scene1->addObject(std::make_shared<GameObject>("Cube"));
-    // cube->model = core::AssimpLoader::loadModel("models/cube.obj");
-    // cube->translate(glm::vec3(0, 0, 0));
+    auto monkey = std::make_shared<GameObject>("Strange Monkey");
+    auto suzanne = playgroundScene->addObject(monkey);
+    suzanne->model = core::AssimpLoader::loadModel("models/nonormalmonkey.obj");
+    suzanne->transform.translate(glm::vec3(-2.0f, 0.0f, 0.0f));
+    suzanne->addBehavior(std::make_shared<Rotate>(glm::vec3(0, 1, 0), 1));
 
+    auto orbiter = std::make_shared<GameObject>("Orbiter");
+    orbiter->model = tetraModel;
+    orbiter->setPos(glm::vec3(3.0f, 0.0f, 0.0f));
+    orbiter->addBehavior(std::make_shared<Translate>(1.0f, glm::vec3(0.1f, 0.0f, 0.0f)));
+    suzanne->addChild(orbiter);
 
-    // cube->collider = std::make_shared<ConvexCollider>(cube->model->getAllVertices(),cube->model->getAllIndices(),cube->getModelMatrix());
-    // cube->collider->update(cube->getModelMatrix());
+    // ---------------- Scene 2: Lighting + Post-Processing ----------------
+    auto lightingScene = sceneManager.createScene("Lighting");
 
-
-    auto cube1 = scene1->addObject(std::make_shared<GameObject>("Cube1"));
-    cube1->model = tetraModel;
-    cube1->setPos(glm::vec3(-2.0f, 0.0f, 0.0f));
-    //cube1->rotate(glm::vec3(1.0f, 0.0f, 0.0f),90);
-    cube1->collider = std::make_shared<ConvexCollider>(cube1->model->getAllVertices(),cube1->model->getAllIndices(),cube1->getWorldTransform());
-
-
-    auto cube2 = scene1->addObject(std::make_shared<GameObject>("Cube2"));
-    cube2->model = tetraModel;
-    cube2->setPos(glm::vec3(2.0f, 0.0f, 0.0f));
-    cube2->collider = std::make_shared<ConvexCollider>(cube2->model->getAllVertices(),cube2->model->getAllIndices(),cube2->getWorldTransform());
-
-    //std::shared_ptr<LightObj> mainLight = nullptr;
-    //auto light = scene1->addObject(GameObject("Light"));
-    // auto light = std::make_shared<LightObj>(glm::vec3(0.0f, 10.0f, 0.0f), glm::vec4(184.0f/256.0f, 23.0f/256.0f, 222.0f/256.0f, 0.0f),10);
-    // mainLight = std::move(light);
-    // auto lightSharedptr = std::make_shared<GameObject>("Point Light");
-    // auto pointlight = scene1->addObject(lightSharedptr);
-    //pointlight->translate(light->getPos());
-
-
-
-    auto scene2 = sceneManager.createScene("Car");
     auto carSharedptr = std::make_shared<GameObject>("Car");
-    auto car = scene2->addObject(carSharedptr);
+    auto car = lightingScene->addObject(carSharedptr);
     car->model = core::AssimpLoader::loadModel("models/car.obj");
-    //car->translate(glm::vec3(2.0f, 0.0f, 0.0f));
-    //car->scale(glm::vec3(0.01f, 0.01f, 0.01f));
-    car->addBehavior(std::make_shared<Rotate>(
-        glm::vec3(1, 0, 0), 1
-    ));
+    car->addBehavior(std::make_shared<Rotate>(glm::vec3(1, 0, 0), 1));
 
     auto quadSharedPtr = std::make_shared<GameObject>("Quad");
-    auto quad2 = scene2->addObject(quadSharedPtr);
+    auto quad2 = lightingScene->addObject(quadSharedPtr);
     quad2->model = core::AssimpLoader::loadModel("models/plane.obj");
-    //quad2->rotate(glm::vec3(1,0,0),glm::radians(90.0f));
-    //quad2->translate(glm::vec3(-2.5f, 0.0f, 0.0f));
 
+    // ---------------- Scene 3: Collision (SAT + Spatial Grid) ----------------
+    auto collisionScene = sceneManager.createScene("Collision");
 
-    // auto carSharedptr2 = std::make_shared<GameObject>("Car");
-    // auto car2 = scene1->addObject(carSharedptr2);
-    // car2->model = core::AssimpLoader::loadModel("models/car.obj");
-    // car2->translate(glm::vec3(0.0f, 0.0f, -50.0f));
-    //car->scale(glm::vec3(0.01f, 0.01f, 0.01f));
-    // car->addBehavior(std::make_shared<Rotate>(
-    //     glm::vec3(1, 0, 0), glm::radians(60.0f)
-    // ));
+    auto cube1 = collisionScene->addObject(std::make_shared<GameObject>("Cube1"));
+    cube1->model = tetraModel;
+    cube1->setPos(glm::vec3(-2.0f, 0.0f, 0.0f));
+    cube1->collider = std::make_shared<ConvexCollider>(cube1->model->getAllVertices(), cube1->model->getAllIndices(), cube1->getWorldTransform());
+
+    auto cube2 = collisionScene->addObject(std::make_shared<GameObject>("Cube2"));
+    cube2->model = tetraModel;
+    cube2->setPos(glm::vec3(2.0f, 0.0f, 0.0f));
+    cube2->collider = std::make_shared<ConvexCollider>(cube2->model->getAllVertices(), cube2->model->getAllIndices(), cube2->getWorldTransform());
+
     core::Texture cmgtGatoTexture("textures/CMGaTo_crop.png");
     core::Texture stone("textures/stone.jpg");
     core::Texture paint("textures/paint.png");
@@ -396,9 +364,9 @@ int main(int argc,char** argv) {
                  clearColor.g, clearColor.b, clearColor.a);
 
 
-    camera.transform.setPos(glm::vec3(0.0f, 0.0f, 150.0f));
+    camera.transform.setPos(glm::vec3(0.0f, 0.0f, 20.0f));
     //camera.rotate(glm::vec3(1,0,0), -10.0f * 3.1415f / 180);
-    camera.speed = 0.2f;
+    camera.speed = 0.02f;
 
     double currentTime = glfwGetTime();
     double finishFrameTime = 0.0;
@@ -428,10 +396,7 @@ int main(int argc,char** argv) {
     //     guiLightColor = glm::vec3(1.0f, 1.0f, 1.0f);
     // }
 
-    float guiShininess = 75.0f;
-    float guiSpecular = 42.0;
-    float guiAmbient = 0.25f;
-    float guiLightRadius = 35.0f;
+    //LightObj light_obj (glm::vec3(0,10,0),glm::vec4(184.0f/256.0f, 23.0f/256.0f, 222.0f/256.0f, 1.0f),35);
 
     float pixels = 512.0;
 
@@ -505,7 +470,8 @@ int main(int argc,char** argv) {
 
         UIContext ctx{ sceneManager, cube1, cube2, deltaTime, fps, averageTimePerSAT,
                uiConfig, benchmarkConfig, currentPostProcessingMode,
-               pixels, kernelCenterValueMatrix, cubeModel, tetraModel };
+               pixels, kernelCenterValueMatrix, cubeModel, tetraModel,
+             guiShininess, guiSpecular, guiAmbient };
         im_gui(window, ctx);
 
         auto sceneNames = sceneManager.getSceneNames();
@@ -536,7 +502,6 @@ int main(int argc,char** argv) {
 
         try_run_benchmark_test(sceneManager, deltaTime, fps,bmDuration);
 
-
         projection = glm::perspective(glm::radians(camera.fov), aspect, 0.1f, 600.0f);
         view = glm::lookAt(camera.getPos(),camera.getPos() + camera.getForward(),camera.getUp());
 
@@ -554,8 +519,7 @@ int main(int argc,char** argv) {
         glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-
-        set_modelShader(modelShader, cmgtGatoTexture, guiShininess, guiSpecular, guiAmbient, guiLightRadius);
+        set_modelShader(modelShader, cmgtGatoTexture, guiShininess, guiSpecular, guiAmbient);
 
         sceneManager.render(modelShader, projection, view);
 

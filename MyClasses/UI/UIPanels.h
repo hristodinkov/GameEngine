@@ -17,6 +17,7 @@ void drawGridSettingsPanel(UIContext& ctx);
 void drawPostProcessingPanel(UIContext& ctx);
 void drawScenesPanel(UIContext& ctx);
 void drawScenePanel(UIContext& ctx);
+void drawLightingPanel(UIContext& ctx);
 void im_gui(GLFWwindow* window, UIContext& ctx);
 
 #endif

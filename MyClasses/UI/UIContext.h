@@ -10,6 +10,8 @@
 #include "../MyClasses/CollisionSystem/BenschmarkWriter.h"
 #include "../core/mesh.h"
 
+class LightObj;
+
 struct UIContext {
     SceneManager& sceneManager;
     std::shared_ptr<GameObject> cube1, cube2;
@@ -21,6 +23,9 @@ struct UIContext {
     float& pixels;
     float& kernelCenterValueMatrix;
     core::Model cubeModel, tetraModel;
+    float& guiShininess;
+    float& guiSpecular;
+    float& guiAmbient;
 };
 
 
