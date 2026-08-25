@@ -17,7 +17,7 @@ Together, these systems form a compact but fully functional engine that demonstr
 |**4. Convex Collision System (SAT)**|Full Separating Axis Theorem implementation: face normals, edge cross‑products, axis projection, overlap testing. Works with any convex mesh| <img src="_gifs/cubes_noGrid.gif" width="500" height="500">|
 |**5. Spatial Hash Grid**|Hashes objects into 3D grid cells to drastically reduce SAT calls. Only nearby objects are tested. Essential for scaling to thousand of objects.|<img src="_gifs/cubes_withGrid.gif" width="500" height="500">|
 |**6. Scene & SceneManager**|Supports multiple scenes, active scene switching, object spawning. |<img src="_gifs/scene_switch.gif" width="500" height="500">|
-|**7. ADS Lighting**|Ambient–Diffuse–Specular lighting system for dynamic scene illumination. Supports multiple light objects.|<img src="_gifs/light.gif" width="500" height="500">|
+|**7. ADS Lighting**|Ambient–Diffuse–Specular lighting system for dynamic scene illumination.|<img src="_gifs/light.gif" width="500" height="500">|
 |**8. Post‑Processing**|Supports invert, grayscale, edge detection and pixelization effects|<img src="_gifs/post_processing.gif" width="500" height="500">|
 
 ## Future improvements
