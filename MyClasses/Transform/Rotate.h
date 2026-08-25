@@ -6,7 +6,7 @@
 #define RAWENGINE_ROTATE_H
 
 #pragma once
-#include "Behavior.h"
+#include "../Utilities/Behavior.h"
 #include <glm/vec3.hpp>
 
 class Rotate : public Behavior {

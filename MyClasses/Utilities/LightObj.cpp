@@ -2,7 +2,7 @@
 // Created by Hristo Dinkov on 20.11.2025 г..
 //
 
-#include "LightObj.h"
+#include "../MyClasses/Utilities/LightObj.h"
 
 glm::vec3 LightObj::getPos() const {
     return position;

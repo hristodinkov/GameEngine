@@ -10,7 +10,7 @@
 #include <glm/vec2.hpp>
 #include <glm/vec3.hpp>
 #include <set>
-#include "../MyClasses/Shader.h"
+#include "../Utilities/Shader.h"
 
 
 class Shader;

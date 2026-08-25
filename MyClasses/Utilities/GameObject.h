@@ -10,12 +10,12 @@
 #include <string>
 #include <vector>
 
-#include "Transform.h"
+#include "../Transform/Transform.h"
 #include "Behavior.h"
 
-#include "Translate.h"
-#include "../core/model.h"
-#include "CollisionSystem/ConvexCollider.h"
+#include "../Transform/Translate.h"
+#include "../../core/model.h"
+#include "../CollisionSystem/ConvexCollider.h"
 
 
 class GameObject {

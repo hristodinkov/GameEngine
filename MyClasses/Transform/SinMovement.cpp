@@ -3,7 +3,7 @@
 //
 
 #include "SinMovement.h"
-#include "GameObject.h"
+#include "../Utilities/GameObject.h"
 #include <cmath>
 
 void SinMovement::update(float deltaTime)

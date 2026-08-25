@@ -2,7 +2,7 @@
 // Created by Hristo Dinkov on 23.10.2025 г..
 //
 
-#include "GameObject.h"
+#include "../MyClasses/Utilities/GameObject.h"
 
 #include <algorithm>
 #include <__msvc_ranges_to.hpp>

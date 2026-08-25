@@ -17,11 +17,13 @@ private:
     int satTestsThisFrame;
     double satTimeThisFrame;
     int collisionsThisFrame;
+    std::vector<std::string> sceneOrder;
 public:
 
     std::shared_ptr<Scene> createScene(const std::string& name);
     void setActiveScene(const std::string& name);
     std::shared_ptr<Scene> getActiveScene() const;
+    std::vector<std::string> getSceneNames() const;
 
     int getSatCount() const;
     double getSatTime() const;

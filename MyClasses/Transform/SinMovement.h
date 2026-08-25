@@ -6,7 +6,7 @@
 #define RAWENGINE_SINMOVEMENT_H
 #include <glm/vec3.hpp>
 
-#include "Behavior.h"
+#include "../Utilities/Behavior.h"
 
 extern float gBenchmarkTime;
 

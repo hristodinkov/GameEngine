@@ -8,14 +8,20 @@
 #pragma once
 #include <vector>
 #include <memory>
-#include "GameObject.h"
+#include "../Utilities/GameObject.h"
 #include <chrono>
+#include <string>
 
 class Scene {
 private:
+    std::string name;
 
 public:
     std::vector<std::shared_ptr<GameObject>> objects;
+
+    Scene(std::string sceneName) : name(std::move(sceneName)) {}
+
+    const std::string& getName() const;
 
     std::shared_ptr<GameObject> addObject(std::shared_ptr<GameObject> obj);
 

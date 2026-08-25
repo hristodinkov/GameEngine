@@ -17,41 +17,46 @@ set(IMGUI_SOURCES
         imgui/backends/imgui_impl_opengl3.cpp
         core/texture.cpp
         core/texture.h
-        MyClasses/Camera.cpp
-        MyClasses/Camera.h
-        MyClasses/Transform.cpp
-        MyClasses/Transform.h
-        MyClasses/GameObject.cpp
-        MyClasses/GameObject.h
-        MyClasses/Behavior.h
-        MyClasses/Scene.cpp
-        MyClasses/Scene.h
-        MyClasses/Rotate.cpp
-        MyClasses/Rotate.h
-        MyClasses/SceneManager.cpp
-        MyClasses/SceneManager.h
-        MyClasses/Style.h
-        MyClasses/LightObj.cpp
-        MyClasses/LightObj.h
-        MyClasses/Translate.cpp
-        MyClasses/Translate.h
-        MyClasses/Shader.cpp
-        MyClasses/Shader.h
-        MyClasses/PostProcessMode.h
+        MyClasses/Utilities/Camera.cpp
+        MyClasses/Utilities/Camera.h
+        MyClasses/Transform/Transform.cpp
+        MyClasses/Transform/Transform.h
+        MyClasses/Utilities/GameObject.cpp
+        MyClasses/Utilities/GameObject.h
+        MyClasses/Utilities/Behavior.h
+        MyClasses/SceneManagement/Scene.cpp
+        MyClasses/SceneManagement/Scene.h
+        MyClasses/Transform/Rotate.cpp
+        MyClasses/Transform/Rotate.h
+        MyClasses/SceneManagement/SceneManager.cpp
+        MyClasses/SceneManagement/SceneManager.h
+        MyClasses/UI/Style.h
+        MyClasses/Utilities/LightObj.cpp
+        MyClasses/Utilities/LightObj.h
+        MyClasses/Transform/Translate.cpp
+        MyClasses/Transform/Translate.h
+        MyClasses/Utilities/Shader.cpp
+        MyClasses/Utilities/Shader.h
+        MyClasses/Utilities/PostProcessMode.h
         MyClasses/CollisionSystem/ConvexCollider.cpp
         MyClasses/CollisionSystem/ConvexCollider.h
         MyClasses/CollisionSystem/Collision.cpp
         MyClasses/CollisionSystem/Benchmark.h
         MyClasses/CollisionSystem/BenschmarkWriter.cpp
         MyClasses/CollisionSystem/BenschmarkWriter.h
-        MyClasses/Random.cpp
-        MyClasses/Random.h
-        MyClasses/SinMovement.cpp
-        MyClasses/SinMovement.h
+        MyClasses/Utilities/Random.cpp
+        MyClasses/Utilities/Random.h
+        MyClasses/Transform/SinMovement.cpp
+        MyClasses/Transform/SinMovement.h
         MyClasses/CollisionSystem/SpatialHashGrid.cpp
         MyClasses/CollisionSystem/SpatialHashGrid.h
         MyClasses/CollisionSystem/ColliderModels.cpp
         MyClasses/CollisionSystem/ColliderModels.h
+        MyClasses/UI/UIContext.h
+        MyClasses/UI/UIPanels.cpp
+        MyClasses/UI/UIPanels.h
+        MyClasses/GlobalVariables.h
+        MyClasses/GlobalVariables.cpp
 )
 
 add_executable(RawEngine main.cpp

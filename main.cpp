@@ -8,20 +8,23 @@
 #include <vcruntime_startup.h>
 
 
-#include "MyClasses/Camera.h"
+#include "MyClasses/Utilities/Camera.h"
 #include "core/mesh.h"
 #include "core/assimpLoader.h"
 #include "core/texture.h"
 
-#include "MyClasses/Rotate.h"
-#include "MyClasses/Scene.h"
-#include "MyClasses/SceneManager.h"
+#include "MyClasses/Transform/Rotate.h"
+#include "MyClasses/SceneManagement/Scene.h"
+#include "MyClasses/SceneManagement/SceneManager.h"
 
-#include "MyClasses/Style.h"
+#include "MyClasses/UI/Style.h"
 
 #include "MyClasses/CollisionSystem/BenschmarkWriter.h"
 #include "MyClasses/CollisionSystem/SpatialHashGrid.h"
 #include "MyClasses/CollisionSystem/ColliderModels.h"
+
+#include "MyClasses/UI/UIPanels.h"
+#include "MyClasses/GlobalVariables.h"
 
 
 //#define MAC_CLION
@@ -35,64 +38,15 @@
 #include <imgui.h>
 #include <imgui_impl_glfw.h>
 #include <imgui_impl_opengl3.h>
-#include "MyClasses/LightObj.h"
+#include "MyClasses/Utilities/LightObj.h"
 #endif
 
-Style style;
+    //VP
+    glm::mat4 view ;
+    glm::mat4 projection;
 
-int g_width = 1200;
-int g_height = 800;
-Camera camera;
-bool IMGuiOpened = true;
-bool IMGuiOpenedCarWindow = true;
-bool checkboxTest = false;
-float value1 = 0.1f;
-int value2 =1;
-int current = 0;
-//VP
-glm::mat4 view ;
-glm::mat4 projection;
-
-//excel
-bool showFileLockedPopup = false;
-std::string lockedFilename;
-//test collision
-bool benchmarkRunning = false;
-double benchmarkStartTime = 0.0;
-BenchmarkResult benchmarkResult;
-BenchmarkConfig benchmarkConfig;
-BenchmarkConfig uiConfig;
-bool testIsRunning = false;
-std::string filename;
-bool useGrid = false;
-bool frozenUseGrid = false;
-bool useTetrahedron = false;
-int numberOfCollishionsThisFrame = 0;
-int framesCountTesting = 0;
-int benchmarkFrameCounter = 0;
-
-
-int bmObjectCount = 10;
-int bmDuration = 200;
-bool bmCamera = true;
-char bmLabel[64] = "baseline";
-//.bat settings
-bool autoRun = false;
-
-SpatialHashGrid grid;
-void myStyle() {
-    style.SetupImGuiStyle();
-}
-
-void processInput(GLFWwindow *window) {
-    if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
-        glfwSetWindowShouldClose(window, true);
-    //if (glfwGetKey(window, GLFW_KEY_C) == GLFW_PRESS)
-
-    camera.Move(window);
-    camera.Rotate(window);
-
-}
+    BenchmarkConfig benchmarkConfig;
+    BenchmarkConfig uiConfig;
 
 void framebufferSizeCallback(GLFWwindow *window,
                              int width, int height) {
@@ -103,30 +57,7 @@ void framebufferSizeCallback(GLFWwindow *window,
         glfwSetInputMode(window, GLFW_RAW_MOUSE_MOTION, GLFW_TRUE);
 }
 
-bool isFileLocked(const std::string& filename) {
-    std::ofstream file(filename, std::ios::app);
-    return !file.is_open();
-}
 
-
-//RawEngine old methods
-
-// GLuint generateShader(const std::string &shaderPath, GLuint shaderType) {
-//     printf("Loading shader: %s\n", shaderPath.c_str());
-//     const std::string shaderText = readFileToString(shaderPath);
-//     const GLuint shader = glCreateShader(shaderType);
-//     const char *s_str = shaderText.c_str();
-//     glShaderSource(shader, 1, &s_str, nullptr);
-//     glCompileShader(shader);
-//     GLint success = 0;
-//     glGetShaderiv(shader, GL_COMPILE_STATUS, &success);
-//     if (!success) {
-//         char infoLog[512];
-//         glGetShaderInfoLog(shader, 512, NULL, infoLog);
-//         printf("Error! Shader issue [%s]: %s\n", shaderPath.c_str(), infoLog);
-//     }
-//     return shader;
-// }
 
 
 float rectangleVertices[]{
@@ -218,212 +149,6 @@ void postProcessing(Shader invertColorsShader, Shader greyShader, Shader edgeDet
 
         glEnable(GL_CULL_FACE);
     }
-}
-
-void im_gui(GLFWwindow *window, core::Model cubeModel,core::Model tetraModel, SceneManager& sceneManager, std::shared_ptr<GameObject> cube1, std::shared_ptr<GameObject> cube2, float deltaTime, float fps, double averageTimePerSAT, BenchmarkConfig& uiConfig, BenchmarkConfig& benchmarkConfig)
-{
-    ImGui_ImplOpenGL3_NewFrame();
-    ImGui_ImplGlfw_NewFrame();
-    ImGui::NewFrame();
-    myStyle();
-
-    // if (ImGui::Begin("Let it be light",&IMGuiOpened)) {
-    //     //ImGui::SliderFloat3("Light Position", glm::value_ptr(guiLightPos), 0.0f, 10.0f);
-    //    // ImGui::ColorEdit3("Light Color", glm::value_ptr(guiLightColor));
-    //     // ImGui::SliderFloat("Shininess", &guiShininess, 1.0f, 512.0f);
-    //     // ImGui::SliderFloat("Specular Strength", &guiSpecular, 0.0f, 256.0f);
-    //     // ImGui::SliderFloat("Ambient Strength", &guiAmbient, 0.0f, 1.0f);
-    //     // ImGui::SliderFloat("Light Radis", &guiLightRadius, 0.0f, 100.0f);
-    //
-    //     ImGui::Combo("Post Process", &currentPostProcessingMode, "None\0Grayscale\0Invert\0EdgeDetection\0Pixalization");
-    //     if (currentPostProcessingMode==3) {
-    //         ImGui::SliderFloat("Kernel Central Value",&kernelCenterValueMatrix,0,-20);
-    //     }
-    //     if (currentPostProcessingMode == 4) {
-    //         ImGui::SliderFloat("Pixels",&pixels,1,1024);
-    //     }
-    // } ImGui::End();
-
-    // if (ImGui::Begin("MoveCar",&IMGuiOpenedCarWindow)) {
-    //     if (ImGui::SliderFloat3("Position",glm::value_ptr(car2->position),-80.0f,100.0f)) {
-    //         car2->setPos(car2->position);
-    //     }
-    // } ImGui::End();
-
-    if (sceneManager.getSatCount()>0) {
-        averageTimePerSAT = sceneManager.getSatTime()/sceneManager.getSatCount();
-    }
-    else {
-        averageTimePerSAT = 0;
-    }
-    if (ImGui::Begin("Cube Controls"))
-    {
-        ImGui::Text("Move Cube 1");
-        if (ImGui::SliderFloat3("Cube1 Pos", glm::value_ptr(cube1->transform.position), -10.0f, 10.0f))
-            cube1->setPos(cube1->transform.position);
-
-
-        ImGui::Separator();
-
-        ImGui::Text("Move Cube 2");
-        if (ImGui::SliderFloat3("Cube2 Pos", glm::value_ptr(cube2->transform.position), -10.0f, 10.0f))
-            cube2->setPos(cube2->transform.position);
-    }
-    ImGui::End();
-
-
-
-    if (ImGui::Begin("Benchmark")) {
-        ImGui::InputInt("Object Count", &bmObjectCount);
-        ImGui::InputInt("Duration (frames)", &bmDuration);
-        ImGui::Checkbox("Use Grid", &useGrid);
-        ImGui::InputText("Label", bmLabel, sizeof(bmLabel));
-        ImGui::Checkbox("Use Tetrahedron",&useTetrahedron);
-        ImGui::Checkbox("Camera look away",&bmCamera );
-        uiConfig.objectCount = bmObjectCount;
-        uiConfig.testDurationFrames = bmDuration;
-        framesCountTesting = bmDuration;
-        uiConfig.useGrid = useGrid;
-        uiConfig.label = bmLabel;
-        uiConfig.randomSeed = 47;
-
-        if (ImGui::Button("Spawn Objects")) {
-            if (useTetrahedron) {
-                sceneManager.spawnCubesInScene(uiConfig.objectCount,uiConfig.randomSeed,tetraModel);
-            }
-            else {
-                sceneManager.spawnCubesInScene(uiConfig.objectCount,uiConfig.randomSeed,cubeModel);
-            }
-
-        }
-        if (ImGui::Button("Run test")) {
-            filename = std::string("test_") + bmLabel + ".xls";
-
-            uiConfig.cellSize = grid.cellSize;
-            if (bmCamera) {
-                camera.xRotation = 0.0f;
-                camera.yRotation = 180.0f;
-                camera.transform.rotation = glm::vec3(
-                    glm::radians(camera.xRotation),
-                    glm::radians(camera.yRotation),
-                    0.0f
-                );
-            }
-
-            camera.transform.updateModelMatrix();
-
-            if (isFileLocked(filename)) {
-                lockedFilename = filename;
-                showFileLockedPopup = true;
-            }
-            else if (benchmarkRunning) {
-                testIsRunning = true;
-
-            }
-            else {
-
-                benchmarkConfig = uiConfig;
-
-                benchmarkRunning = true;
-                benchmarkStartTime = glfwGetTime();
-
-                frozenUseGrid = useGrid;
-
-                benchmarkResult = BenchmarkResult();
-                benchmarkResult.config = benchmarkConfig;
-
-                sceneManager.resetSatStats();
-            }
-
-        }
-
-
-    }
-    ImGui::End();
-
-    if (autoRun && !benchmarkRunning) {
-        filename = std::string("test_") + bmLabel + ".xls";
-
-        uiConfig.cellSize = grid.cellSize;
-        benchmarkConfig = uiConfig;
-
-        frozenUseGrid = useGrid;
-        benchmarkRunning = true;
-        benchmarkStartTime = glfwGetTime();
-
-        benchmarkResult = BenchmarkResult();
-        benchmarkResult.config = benchmarkConfig;
-
-        sceneManager.resetSatStats();
-
-        if (useTetrahedron)
-            sceneManager.spawnCubesInScene(uiConfig.objectCount, uiConfig.randomSeed, tetraModel);
-        else
-            sceneManager.spawnCubesInScene(uiConfig.objectCount, uiConfig.randomSeed, cubeModel);
-    }
-
-    if (showFileLockedPopup) {
-        ImGui::OpenPopup("File Locked");
-    }
-
-    if (ImGui::BeginPopupModal("File Locked", NULL, ImGuiWindowFlags_AlwaysAutoResize)) {
-        ImGui::Text("The file '%s' is currently open in another program.", lockedFilename.c_str());
-        ImGui::Text("Please close it before running the test again or set a new name for the test.");
-
-        if (ImGui::Button("OK", ImVec2(120, 0))) {
-            showFileLockedPopup = false;
-            ImGui::CloseCurrentPopup();
-        }
-
-        ImGui::EndPopup();
-    }
-
-    if (testIsRunning) {
-        ImGui::OpenPopup("Test is running!");
-    }
-
-    if (ImGui::BeginPopupModal("Test is running!", NULL, ImGuiWindowFlags_AlwaysAutoResize)) {
-        ImGui::Text("A test is currently running.");
-        ImGui::Text("Please wait until the test is complete.");
-
-        if (ImGui::Button("OK", ImVec2(120, 0))) {
-            testIsRunning = false;
-            ImGui::CloseCurrentPopup();
-        }
-
-        ImGui::EndPopup();
-    }
-
-
-    if (ImGui::Begin("Performance"))
-    {
-        ImGui::Text("FPS: %.1f", fps);
-        ImGui::Text("Frame Time: %.3f ms", deltaTime * 1000.0f);
-
-        ImGui::Separator();
-        ImGui::Text("SAT Tests This Frame: %d", sceneManager.getSatCount());
-        ImGui::Text("SAT Time: %.6f s", sceneManager.getSatTime());
-        ImGui::Text("Avg Time per SAT: %.9f s", averageTimePerSAT);
-
-    }
-    ImGui::End();
-
-    if (ImGui::Begin("Grid Settings")) {
-        if (ImGui::Button("CellSize = 200")) grid.cellSize = 200.0f;
-        if (ImGui::Button("CellSize = 100")) grid.cellSize = 100.0f;
-        if (ImGui::Button("CellSize = 50"))  grid.cellSize = 50.0f;
-        if (ImGui::Button("CellSize = 25"))  grid.cellSize = 25.0f;
-        if (ImGui::Button("CellSize = 10"))  grid.cellSize = 10.0f;
-        if (ImGui::Button("CellSize = 5"))   grid.cellSize = 5.0f;
-        if (ImGui::Button("CellSize = 1")) grid.cellSize = 1.0f;
-        if (ImGui::Button("CellSize = 0.5"))  grid.cellSize = 0.5f;
-        if (ImGui::Button("CellSize = 0.1")) grid.cellSize = 0.1f;
-        if (ImGui::Button("CellSize = 0.05")) grid.cellSize = 0.05f;
-        if (ImGui::Button("CellSize = 0.01"))  grid.cellSize = 0.01f;
-        if (ImGui::Button("CellSize = 0.005")) grid.cellSize = 0.005f;
-    }
-    ImGui::End();
-    processInput(window);
 }
 
 void set_modelShader(Shader modelShader, core::Texture cmgtGatoTexture, /*glm::vec3 guiLightPos*/ float guiShininess, float guiSpecular, float guiAmbient, float guiLightRadius) {
@@ -774,16 +499,21 @@ int main(int argc,char** argv) {
     glBindVertexArray(0);
 
     float aspect = static_cast<float>(g_width) / g_height;
-
+    int currentPostProcessingMode = 0;
     while (!glfwWindowShouldClose(window))
     {
-        int currentPostProcessingMode = 0;
-        im_gui(window, cubeModel,tetraModel, sceneManager, cube1, cube2, deltaTime, fps, averageTimePerSAT,uiConfig,benchmarkConfig);
 
-        if (glfwGetKey(window, GLFW_KEY_1) == GLFW_PRESS)
-            sceneManager.setActiveScene("Monkey");
-        // if (glfwGetKey(window, GLFW_KEY_2) == GLFW_PRESS)
-        //     sceneManager.setActiveScene("Car");
+        UIContext ctx{ sceneManager, cube1, cube2, deltaTime, fps, averageTimePerSAT,
+               uiConfig, benchmarkConfig, currentPostProcessingMode,
+               pixels, kernelCenterValueMatrix, cubeModel, tetraModel };
+        im_gui(window, ctx);
+
+        auto sceneNames = sceneManager.getSceneNames();
+        for (int i = 0; i < (int)sceneNames.size() && i < 5; i++) {
+            if (glfwGetKey(window, GLFW_KEY_1 + i) == GLFW_PRESS) {
+                sceneManager.setActiveScene(sceneNames[i]);
+            }
+        }
 
         sceneManager.update(deltaTime);
 
@@ -804,7 +534,7 @@ int main(int argc,char** argv) {
             sceneManager.runSAT(A, B);
         }
 
-        try_run_benchmark_test(sceneManager, deltaTime, fps,framesCountTesting);
+        try_run_benchmark_test(sceneManager, deltaTime, fps,bmDuration);
 
 
         projection = glm::perspective(glm::radians(camera.fov), aspect, 0.1f, 600.0f);

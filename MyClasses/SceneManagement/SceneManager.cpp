@@ -2,18 +2,19 @@
 // Created by Hristo Dinkov on 3.11.2025 г..
 //
 
-#include "SceneManager.h"
-#include "Random.h"
+#include "../MyClasses/SceneManagement/SceneManager.h"
+#include "../Utilities/Random.h"
 #include <iostream>
 
-#include "Rotate.h"
-#include "SinMovement.h"
-#include "CollisionSystem/Collision.h"
+// #include "../MyClasses/Transform/Rotate.h"
+#include "../Transform/SinMovement.h"
+#include "../CollisionSystem/Collision.h"
 
 
 std::shared_ptr<Scene> SceneManager::createScene(const std::string& name) {
-    std::shared_ptr<Scene> scene = std::make_shared<Scene>();
+    std::shared_ptr<Scene> scene = std::make_shared<Scene>(name);
     scenesDictionary[name] = scene;
+    sceneOrder.push_back(name);
     if (!currentScene) {
         currentScene = scene;
     }
@@ -30,6 +31,10 @@ void SceneManager::setActiveScene(const std::string& name) {
 
 std::shared_ptr<Scene> SceneManager::getActiveScene() const {
     return currentScene;
+}
+
+std::vector<std::string> SceneManager::getSceneNames() const {
+    return sceneOrder;
 }
 
 void SceneManager::update(float deltaTime) {

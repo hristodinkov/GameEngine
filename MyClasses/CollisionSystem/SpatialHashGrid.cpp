@@ -3,7 +3,7 @@
 //
 
 #include "SpatialHashGrid.h"
-#include "../GameObject.h"
+#include "../Utilities/GameObject.h"
 
 
 SpatialHashGrid::CellCoord SpatialHashGrid::toCell(const glm::vec3 &pos) const {

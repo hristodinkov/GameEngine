@@ -2,8 +2,8 @@
 // Created by Hristo Dinkov on 23.10.2025 г..
 //
 
-#include "Scene.h"
-#include "../MyClasses/CollisionSystem/Collision.h"
+#include "../MyClasses/SceneManagement/Scene.h"
+#include "../CollisionSystem/Collision.h"
 
 std::shared_ptr<GameObject> Scene::addObject(std::shared_ptr<GameObject> obj) {
     objects.push_back(obj);
@@ -16,6 +16,10 @@ void Scene::update(float deltaTime) {
         objects[i]->update(deltaTime);
     }
 
+}
+
+const std::string& Scene::getName() const {
+    return name;
 }
 
 void Scene::render(Shader& shader,const glm::mat4& projection,const glm::mat4& view)

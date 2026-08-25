@@ -4,7 +4,7 @@
 
 #include "Rotate.h"
 
-#include "GameObject.h"
+#include "../Utilities/GameObject.h"
 
 
 void Rotate::update(float deltaTime) {

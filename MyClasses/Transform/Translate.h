@@ -6,7 +6,7 @@
 #define RAWENGINE_TRANSLATE_H
 #include <glm/vec3.hpp>
 
-#include "Behavior.h"
+#include "../Utilities/Behavior.h"
 
 
 class Translate:public Behavior {
