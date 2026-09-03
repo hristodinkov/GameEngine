@@ -21,11 +21,9 @@ Together, these systems form a compact but fully functional engine that demonstr
 |**8. Post‑Processing**|Supports invert, grayscale, edge detection and pixelization effects|<img src="_gifs/post_processing.gif" width="500" height="500">|
 
 ## Future improvements
-1. To complete my git wiki page (https://github.com/hristodinkov/AdvRendering)
-2. Combine my exisitng features with the collision detection
-3. Visible hierarchy
-4. Scene and Camera view
-5. Concave collision detection
+1. Visible hierarchy
+2. Scene and Camera view
+3. Concave collision detection
 
 ## Build instructions
 
