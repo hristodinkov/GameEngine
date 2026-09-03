@@ -505,7 +505,9 @@ int main(int argc,char** argv) {
 
         sceneManager.resetSatStats();
 
-        for (auto& [A, B] : pairs) {
+        for (int i = 0; i < pairs.size(); i++) {
+            GameObject* A = pairs[i].first;
+            GameObject* B = pairs[i].second;
             sceneManager.runSAT(A, B);
         }
 
