@@ -104,7 +104,9 @@ std::vector<std::pair<GameObject *, GameObject *> > SceneManager::computeBruteFo
     auto& objs = currentScene->objects;
 
     for (size_t i = 0; i < objs.size(); i++) {
+        if (!objs[i]->collider) continue;
         for (size_t j = i + 1; j < objs.size(); j++) {
+            if (!objs[j]->collider) continue;
             pairs.emplace_back(objs[i].get(), objs[j].get());
         }
     }

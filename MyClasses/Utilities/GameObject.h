@@ -16,12 +16,14 @@
 #include "../Transform/Translate.h"
 #include "../../core/model.h"
 #include "../CollisionSystem/ConvexCollider.h"
+#include "../../core/texture.h"
 
 
 class GameObject {
 public:
     std::string name;
     std::optional<core::Model> model;
+    std::optional<core::Texture> texture;
     GameObject* parent = nullptr;
     std::vector<std::shared_ptr<GameObject>> children;
     std::vector<std::shared_ptr<Behavior>> behaviors;

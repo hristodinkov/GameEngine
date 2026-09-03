@@ -43,6 +43,9 @@ void GameObject::render(Shader& shader,const glm::mat4& projection,const glm::ma
     glm::mat4 modelMat = getWorldTransform();
     glm::mat4 mvp = projection * view * modelMat;
 
+    if (texture.has_value())
+        shader.BindTexture("texture0", texture->getId(), 0);
+
     shader.SetVec3Uniform("color", color);
     shader.SetMat4Uniform("modelMatrix", modelMat);
     shader.SetMat4Uniform("viewMatrix", view);

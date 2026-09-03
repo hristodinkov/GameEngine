@@ -149,7 +149,7 @@ void postProcessing(Shader invertColorsShader, Shader greyShader, Shader edgeDet
     }
 }
 
-void set_modelShader(Shader modelShader, core::Texture cmgtGatoTexture, float guiShininess, float guiSpecular, float guiAmbient) {
+void set_modelShader(Shader modelShader, float guiShininess, float guiSpecular, float guiAmbient) {
     modelShader.Activate();
     modelShader.SetVec3Uniform("cameraPos", camera.getPos());
     modelShader.SetVec3Uniform("lightPos", guiLightPos);
@@ -160,7 +160,6 @@ void set_modelShader(Shader modelShader, core::Texture cmgtGatoTexture, float gu
     modelShader.SetFloatUniform("shininess", guiShininess);
     modelShader.SetMat4Uniform("viewMatrix", view);
     modelShader.SetMat4Uniform("projMatrix", projection);
-    modelShader.BindTexture("textures/CMGaTo_crop.jpg", cmgtGatoTexture.getId(), 0);
 }
 void try_run_benchmark_test(SceneManager& sceneManager, float deltaTime, float fps, int targetFrames)
 {
@@ -312,34 +311,35 @@ int main(int argc,char** argv) {
     core::Mesh tetraMesh(tetraVerts,tetraIndices);
     core::Model tetraModel({tetraMesh});
 
-        // ---------------- Scene 1: Playground (Transform hierarchy + Behaviors) ----------------
+    // ---------------- Scene 1: Playground  ----------------
     auto playgroundScene = sceneManager.createScene("Playground");
 
     auto monkey = std::make_shared<GameObject>("Strange Monkey");
     auto suzanne = playgroundScene->addObject(monkey);
     suzanne->model = core::AssimpLoader::loadModel("models/nonormalmonkey.obj");
     suzanne->transform.translate(glm::vec3(-2.0f, 0.0f, 0.0f));
-    suzanne->addBehavior(std::make_shared<Rotate>(glm::vec3(0, 1, 0), 1));
+    suzanne->addBehavior(std::make_shared<Rotate>(glm::vec3(0, 1, 0), 40));
 
     auto orbiter = std::make_shared<GameObject>("Orbiter");
-    orbiter->model = tetraModel;
+    orbiter->model = core::AssimpLoader::loadModel("models/sphere.obj");;
     orbiter->setPos(glm::vec3(3.0f, 0.0f, 0.0f));
-    orbiter->addBehavior(std::make_shared<Translate>(1.0f, glm::vec3(0.1f, 0.0f, 0.0f)));
+    orbiter->addBehavior(std::make_shared<Rotate>(glm::vec3(0, 1, 1), 300));
+    orbiter->transform.scale(glm::vec3(0.5f, 0.5f, 0.5f));
     suzanne->addChild(orbiter);
 
-    // ---------------- Scene 2: Lighting + Post-Processing ----------------
-    auto lightingScene = sceneManager.createScene("Lighting");
-
     auto carSharedptr = std::make_shared<GameObject>("Car");
-    auto car = lightingScene->addObject(carSharedptr);
+    auto car = playgroundScene->addObject(carSharedptr);
+    car->setPos(glm::vec3(-7.0f, 0.0f, 0.0f));
     car->model = core::AssimpLoader::loadModel("models/car.obj");
-    car->addBehavior(std::make_shared<Rotate>(glm::vec3(1, 0, 0), 1));
+    car->addBehavior(std::make_shared<Rotate>(glm::vec3(1, 0, 0), 20));
 
     auto quadSharedPtr = std::make_shared<GameObject>("Quad");
-    auto quad2 = lightingScene->addObject(quadSharedPtr);
+    auto quad2 = playgroundScene->addObject(quadSharedPtr);
+    quad2->setPos(glm::vec3(5.0f, 0.0f, 0.0f));
     quad2->model = core::AssimpLoader::loadModel("models/plane.obj");
+    quad2->transform.setRotation(glm::vec3(90,0,0));
 
-    // ---------------- Scene 3: Collision (SAT + Spatial Grid) ----------------
+    // ---------------- Scene 2: Collision Detection ----------------
     auto collisionScene = sceneManager.createScene("Collision");
 
     auto cube1 = collisionScene->addObject(std::make_shared<GameObject>("Cube1"));
@@ -358,6 +358,15 @@ int main(int argc,char** argv) {
     core::Texture chalk ("textures/chalk.jpg");
     core::Texture santa("textures/Santa.jpg");
     core::Texture tiles("textures/tiles.jpg");
+    core::Texture black("textures/black.png");
+
+    suzanne->texture = chalk;
+    orbiter->texture = santa;
+    car->texture = cmgtGatoTexture;
+    quad2->texture = tiles;
+
+    cube1->texture = black;
+    cube2->texture = black;
 
     glm::vec4 clearColor = glm::vec4(0.2f, 0.2f, 0.2f, 1.0f);
     glClearColor(clearColor.r,
@@ -519,7 +528,7 @@ int main(int argc,char** argv) {
         glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-        set_modelShader(modelShader, cmgtGatoTexture, guiShininess, guiSpecular, guiAmbient);
+        set_modelShader(modelShader, guiShininess, guiSpecular, guiAmbient);
 
         sceneManager.render(modelShader, projection, view);
 

@@ -175,10 +175,15 @@ void drawScenesPanel(UIContext& ctx) {
     ImGui::End();
 }
 
+void drawCollisionPanels(UIContext& ctx) {
+    drawBenchmarkPanel(ctx);
+    drawCubeControlsPanel(ctx);
+}
+
 void drawScenePanel(UIContext& ctx) {
     static const std::unordered_map<std::string, void(*)(UIContext&)> scenePanels = {
-        { "Collision", drawBenchmarkPanel },
-        { "Playground", drawCubeControlsPanel },
+        {"Playground" , drawLightingPanel},
+        { "Collision", drawCollisionPanels },
     };
 
     std::string active = ctx.sceneManager.getActiveScene()->getName();
@@ -216,9 +221,9 @@ void im_gui(GLFWwindow* window, UIContext& ctx) {
     drawScenesPanel(ctx);
     drawPostProcessingPanel(ctx);
     drawScenePanel(ctx);
-    drawGridSettingsPanel(ctx);
+    //drawGridSettingsPanel(ctx);
     drawPerformancePanel(ctx);
-    drawLightingPanel(ctx);
+    //drawLightingPanel(ctx);
 
     if (autoRun && !benchmarkRunning) {
         filename = std::string("test_") + bmLabel + ".xls";
